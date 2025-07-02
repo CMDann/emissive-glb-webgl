@@ -6,47 +6,184 @@ body {
     overflow: hidden;
 }
 
-#info {
-    position: absolute;
+/* UI Toggle Button */
+.ui-toggle {
+    position: fixed;
     top: 10px;
-    left: 10px;
+    right: 10px;
+    z-index: 1000;
+    background: #4CAF50;
     color: white;
-    background: rgba(0,0,0,0.7);
-    padding: 15px;
-    border-radius: 8px;
-    z-index: 100;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
 }
 
+.ui-toggle:hover {
+    background: #45a049;
+}
+
+/* UI Panels */
+.ui-panel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 999;
+    transition: transform 0.3s ease;
+    max-height: 40vh;
+    overflow-y: auto;
+}
+
+.top-panel {
+    top: 0;
+    border-bottom: 2px solid #4CAF50;
+}
+
+.bottom-panel {
+    bottom: 0;
+    border-top: 2px solid #4CAF50;
+}
+
+.ui-panel.hidden {
+    transform: translateY(-100%);
+}
+
+.bottom-panel.hidden {
+    transform: translateY(100%);
+}
+
+.panel-content {
+    padding: 15px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Section Headers */
+h3 {
+    color: #4CAF50;
+    margin: 0 0 15px 0;
+    font-size: 18px;
+    text-align: center;
+}
+
+.collapsible-section {
+    margin-bottom: 15px;
+}
+
+.section-header {
+    color: #fff;
+    margin: 0;
+    padding: 10px;
+    background: rgba(40, 40, 40, 0.8);
+    border-radius: 5px;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    transition: background 0.2s ease;
+}
+
+.section-header:hover {
+    background: rgba(60, 60, 60, 0.8);
+}
+
+.collapse-icon {
+    margin-right: 10px;
+    transition: transform 0.2s ease;
+    font-size: 12px;
+}
+
+.section-header.collapsed .collapse-icon {
+    transform: rotate(-90deg);
+}
+
+.section-content {
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    max-height: 1000px;
+}
+
+.section-content.collapsed {
+    max-height: 0;
+}
+
+/* Grid Layouts */
+.lights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+/* Light Sections */
+.light-section {
+    background: rgba(40, 40, 40, 0.8);
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid #4CAF50;
+}
+
+.light-section h5 {
+    margin: 0 0 15px 0;
+    color: #4CAF50;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* Control Groups */
 .control-group {
     margin: 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 label {
-    display: block;
-    margin-bottom: 5px;
     color: #fff;
+    font-size: 12px;
+    min-width: 80px;
+    white-space: nowrap;
 }
 
+/* Input Styles */
 input[type="range"] {
-    width: 200px;
+    flex: 1;
+    min-width: 100px;
 }
 
 input[type="color"] {
-    width: 50px;
+    width: 40px;
     height: 30px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    padding: 0;
 }
 
 button {
     background: #4CAF50;
     color: white;
     border: none;
-    padding: 8px 16px;
-    margin: 5px;
+    padding: 8px 12px;
     border-radius: 4px;
     cursor: pointer;
+    font-size: 12px;
+    white-space: nowrap;
 }
 
 button:hover {
@@ -57,6 +194,33 @@ button.off {
     background: #f44336;
 }
 
+button.off:hover {
+    background: #da190b;
+}
+
+/* Value Display */
+span {
+    color: #fff;
+    font-size: 12px;
+    min-width: 40px;
+    text-align: center;
+}
+
+/* Status Info */
+.status-info {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.status-info p {
+    color: #aaa;
+    margin: 5px 0;
+    font-size: 12px;
+    text-align: center;
+}
+
+/* Loading Screen */
 #loading {
     position: absolute;
     top: 50%;
@@ -64,4 +228,48 @@ button.off {
     transform: translate(-50%, -50%);
     color: white;
     font-size: 18px;
+    z-index: 500;
+}
+
+/* Scrollbar Styling */
+.ui-panel::-webkit-scrollbar {
+    width: 8px;
+}
+
+.ui-panel::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.ui-panel::-webkit-scrollbar-thumb {
+    background: #4CAF50;
+    border-radius: 4px;
+}
+
+.ui-panel::-webkit-scrollbar-thumb:hover {
+    background: #45a049;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .lights-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .controls-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .ui-panel {
+        max-height: 50vh;
+    }
+    
+    .control-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 5px;
+    }
+    
+    label {
+        min-width: auto;
+    }
 }

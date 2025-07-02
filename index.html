@@ -10,49 +10,199 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="info">
-        <h3>3D Scene Controls</h3>
-        <div class="control-group">
-            <button id="lightToggle">Additional Light: ON</button>
+    <!-- UI Toggle Button -->
+    <button id="uiToggle" class="ui-toggle">Hide UI</button>
+    
+    <!-- Top UI Panel -->
+    <div id="topPanel" class="ui-panel top-panel">
+        <div class="panel-content">
+            <h3>3D Scene Controls</h3>
+            
+            <div class="collapsible-section">
+                <h4 class="section-header" data-section="lighting">
+                    <span class="collapse-icon">▼</span> Lighting Controls
+                </h4>
+                <div class="section-content" id="lighting-content">
+                    <div class="lights-grid">
+                        <div class="light-section">
+                            <h5>Light 1 (Main)</h5>
+                            <div class="control-group">
+                                <button id="light1Toggle">Light 1: ON</button>
+                                <input type="color" id="light1Color" value="#ffffff">
+                            </div>
+                            <div class="control-group">
+                                <label for="light1Intensity">Intensity:</label>
+                                <input type="range" id="light1Intensity" min="0" max="2" step="0.1" value="1">
+                                <span id="light1IntensityValue">1.0</span>
+                            </div>
+                            <div class="control-group">
+                                <label for="light1RotationX">Rotation X:</label>
+                                <input type="range" id="light1RotationX" min="0" max="360" step="5" value="45">
+                                <span id="light1RotationXValue">45°</span>
+                            </div>
+                            <div class="control-group">
+                                <label for="light1RotationY">Rotation Y:</label>
+                                <input type="range" id="light1RotationY" min="0" max="360" step="5" value="45">
+                                <span id="light1RotationYValue">45°</span>
+                            </div>
+                        </div>
+                        
+                        <div class="light-section">
+                            <h5>Light 2</h5>
+                            <div class="control-group">
+                                <button id="light2Toggle">Light 2: OFF</button>
+                                <input type="color" id="light2Color" value="#ff8888">
+                            </div>
+                            <div class="control-group">
+                                <label for="light2Intensity">Intensity:</label>
+                                <input type="range" id="light2Intensity" min="0" max="2" step="0.1" value="0.5">
+                                <span id="light2IntensityValue">0.5</span>
+                            </div>
+                            <div class="control-group">
+                                <label for="light2RotationX">Rotation X:</label>
+                                <input type="range" id="light2RotationX" min="0" max="360" step="5" value="135">
+                                <span id="light2RotationXValue">135°</span>
+                            </div>
+                            <div class="control-group">
+                                <label for="light2RotationY">Rotation Y:</label>
+                                <input type="range" id="light2RotationY" min="0" max="360" step="5" value="45">
+                                <span id="light2RotationYValue">45°</span>
+                            </div>
+                        </div>
+                        
+                        <div class="light-section">
+                            <h5>Light 3</h5>
+                            <div class="control-group">
+                                <button id="light3Toggle">Light 3: OFF</button>
+                                <input type="color" id="light3Color" value="#88ff88">
+                            </div>
+                            <div class="control-group">
+                                <label for="light3Intensity">Intensity:</label>
+                                <input type="range" id="light3Intensity" min="0" max="2" step="0.1" value="0.5">
+                                <span id="light3IntensityValue">0.5</span>
+                            </div>
+                            <div class="control-group">
+                                <label for="light3RotationX">Rotation X:</label>
+                                <input type="range" id="light3RotationX" min="0" max="360" step="5" value="225">
+                                <span id="light3RotationXValue">225°</span>
+                            </div>
+                            <div class="control-group">
+                                <label for="light3RotationY">Rotation Y:</label>
+                                <input type="range" id="light3RotationY" min="0" max="360" step="5" value="45">
+                                <span id="light3RotationYValue">45°</span>
+                            </div>
+                        </div>
+                        
+                        <div class="light-section">
+                            <h5>Light 4</h5>
+                            <div class="control-group">
+                                <button id="light4Toggle">Light 4: OFF</button>
+                                <input type="color" id="light4Color" value="#8888ff">
+                            </div>
+                            <div class="control-group">
+                                <label for="light4Intensity">Intensity:</label>
+                                <input type="range" id="light4Intensity" min="0" max="2" step="0.1" value="0.5">
+                                <span id="light4IntensityValue">0.5</span>
+                            </div>
+                            <div class="control-group">
+                                <label for="light4RotationX">Rotation X:</label>
+                                <input type="range" id="light4RotationX" min="0" max="360" step="5" value="315">
+                                <span id="light4RotationXValue">315°</span>
+                            </div>
+                            <div class="control-group">
+                                <label for="light4RotationY">Rotation Y:</label>
+                                <input type="range" id="light4RotationY" min="0" max="360" step="5" value="45">
+                                <span id="light4RotationYValue">45°</span>
+                            </div>
+                        </div>
+                        
+                        <div class="light-section">
+                            <h5>Light 5</h5>
+                            <div class="control-group">
+                                <button id="light5Toggle">Light 5: OFF</button>
+                                <input type="color" id="light5Color" value="#ffff88">
+                            </div>
+                            <div class="control-group">
+                                <label for="light5Intensity">Intensity:</label>
+                                <input type="range" id="light5Intensity" min="0" max="2" step="0.1" value="0.5">
+                                <span id="light5IntensityValue">0.5</span>
+                            </div>
+                            <div class="control-group">
+                                <label for="light5RotationX">Rotation X:</label>
+                                <input type="range" id="light5RotationX" min="0" max="360" step="5" value="90">
+                                <span id="light5RotationXValue">90°</span>
+                            </div>
+                            <div class="control-group">
+                                <label for="light5RotationY">Rotation Y:</label>
+                                <input type="range" id="light5RotationY" min="0" max="360" step="5" value="0">
+                                <span id="light5RotationYValue">0°</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="control-group">
-            <label for="lightIntensity">Light Intensity:</label>
-            <input type="range" id="lightIntensity" min="0" max="2" step="0.1" value="1">
-            <span id="intensityValue">1.0</span>
+    </div>
+    
+    <!-- Bottom UI Panel -->
+    <div id="bottomPanel" class="ui-panel bottom-panel">
+        <div class="panel-content">
+            <div class="collapsible-section">
+                <h4 class="section-header" data-section="scene">
+                    <span class="collapse-icon">▼</span> Scene Controls
+                </h4>
+                <div class="section-content" id="scene-content">
+                    <div class="controls-grid">
+                        <div class="control-group">
+                            <label for="backgroundColor">Background Color:</label>
+                            <input type="color" id="backgroundColor" value="#0a0a0a">
+                        </div>
+                        <div class="control-group">
+                            <button id="materialsToggle">Materials: ON</button>
+                            <button id="wireframeToggle">Wireframe: OFF</button>
+                        </div>
+                        <div class="control-group">
+                            <button id="lightsToggle">Show Lights: OFF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="collapsible-section">
+                <h4 class="section-header" data-section="model">
+                    <span class="collapse-icon">▼</span> Model Transform
+                </h4>
+                <div class="section-content" id="model-content">
+                    <div class="controls-grid">
+                        <div class="control-group">
+                            <label for="modelScale">Model Scale:</label>
+                            <input type="range" id="modelScale" min="0.1" max="3" step="0.1" value="1">
+                            <span id="scaleValue">1.0</span>
+                        </div>
+                        <div class="control-group">
+                            <label for="modelRotationX">Rotation X:</label>
+                            <input type="range" id="modelRotationX" min="0" max="360" step="5" value="0">
+                            <span id="rotationXValue">0°</span>
+                        </div>
+                        <div class="control-group">
+                            <label for="modelRotationY">Rotation Y:</label>
+                            <input type="range" id="modelRotationY" min="0" max="360" step="5" value="0">
+                            <span id="rotationYValue">0°</span>
+                        </div>
+                        <div class="control-group">
+                            <label for="modelRotationZ">Rotation Z:</label>
+                            <input type="range" id="modelRotationZ" min="0" max="360" step="5" value="0">
+                            <span id="rotationZValue">0°</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="status-info">
+                <p>Use mouse to orbit around the scene</p>
+                <p>Model: <span id="modelStatus">Looking for test.glb...</span></p>
+            </div>
         </div>
-        <div class="control-group">
-            <label for="backgroundColor">Background Color:</label>
-            <input type="color" id="backgroundColor" value="#0a0a0a">
-        </div>
-        <div class="control-group">
-            <button id="materialsToggle">Materials: ON</button>
-            <button id="wireframeToggle">Wireframe: OFF</button>
-        </div>
-        <div class="control-group">
-            <button id="lightsToggle">Show Lights: OFF</button>
-        </div>
-        <div class="control-group">
-            <label for="modelScale">Model Scale:</label>
-            <input type="range" id="modelScale" min="0.1" max="3" step="0.1" value="1">
-            <span id="scaleValue">1.0</span>
-        </div>
-        <div class="control-group">
-            <label for="modelRotationX">Rotation X:</label>
-            <input type="range" id="modelRotationX" min="0" max="360" step="5" value="0">
-            <span id="rotationXValue">0°</span>
-        </div>
-        <div class="control-group">
-            <label for="modelRotationY">Rotation Y:</label>
-            <input type="range" id="modelRotationY" min="0" max="360" step="5" value="0">
-            <span id="rotationYValue">0°</span>
-        </div>
-        <div class="control-group">
-            <label for="modelRotationZ">Rotation Z:</label>
-            <input type="range" id="modelRotationZ" min="0" max="360" step="5" value="0">
-            <span id="rotationZValue">0°</span>
-        </div>
-        <p>Use mouse to orbit around the scene</p>
-        <p>Model: <span id="modelStatus">Looking for test.glb...</span></p>
     </div>
     
     <div id="loading">Loading Scene...</div>

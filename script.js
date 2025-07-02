@@ -1,7 +1,7 @@
 let scene, camera, renderer, controls;
-let additionalLight;
+let lights = [];
+let lightStates = [];
 let loadedModel;
-let lightEnabled = true;
 let baseBackgroundColor = new THREE.Color(0x0a0a0a);
 let materialsEnabled = true;
 let wireframeEnabled = false;
@@ -63,30 +63,46 @@ function setupLighting() {
     const ambientLight = new THREE.AmbientLight(0x404040, 0.1);
     scene.add(ambientLight);
     
-    // Additional controllable light
-    additionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    additionalLight.position.set(10, 10, 5);
-    additionalLight.castShadow = true;
-    additionalLight.shadow.mapSize.width = 2048;
-    additionalLight.shadow.mapSize.height = 2048;
-    scene.add(additionalLight);
+    // Create 5 directional lights with different default positions and colors
+    const lightConfigs = [
+        { color: 0xffffff, intensity: 1, position: [10, 10, 5], enabled: true },
+        { color: 0xff8888, intensity: 0.5, position: [-10, 10, 5], enabled: false },
+        { color: 0x88ff88, intensity: 0.5, position: [10, 10, -5], enabled: false },
+        { color: 0x8888ff, intensity: 0.5, position: [-10, 10, -5], enabled: false },
+        { color: 0xffff88, intensity: 0.5, position: [0, 15, 0], enabled: false }
+    ];
+    
+    lightConfigs.forEach((config, index) => {
+        const light = new THREE.DirectionalLight(config.color, config.intensity);
+        light.position.set(...config.position);
+        light.castShadow = true;
+        light.shadow.mapSize.width = 2048;
+        light.shadow.mapSize.height = 2048;
+        light.visible = config.enabled;
+        
+        scene.add(light);
+        lights.push(light);
+        lightStates.push(config.enabled);
+    });
 }
 
 function setupLightHelpers() {
-    // DirectionalLight helper
-    const directionalLightHelper = new THREE.DirectionalLightHelper(additionalLight, 2);
-    directionalLightHelper.visible = lightsVisible;
-    scene.add(directionalLightHelper);
-    lightHelpers.push(directionalLightHelper);
-    
-    // Light position indicator (sphere)
-    const lightIndicatorGeometry = new THREE.SphereGeometry(0.2, 8, 8);
-    const lightIndicatorMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-    const lightIndicator = new THREE.Mesh(lightIndicatorGeometry, lightIndicatorMaterial);
-    lightIndicator.position.copy(additionalLight.position);
-    lightIndicator.visible = lightsVisible;
-    scene.add(lightIndicator);
-    lightHelpers.push(lightIndicator);
+    lights.forEach((light, index) => {
+        // DirectionalLight helper
+        const lightHelper = new THREE.DirectionalLightHelper(light, 1.5);
+        lightHelper.visible = lightsVisible;
+        scene.add(lightHelper);
+        lightHelpers.push(lightHelper);
+        
+        // Light position indicator (sphere)
+        const indicatorGeometry = new THREE.SphereGeometry(0.15, 8, 8);
+        const indicatorMaterial = new THREE.MeshBasicMaterial({ color: light.color });
+        const indicator = new THREE.Mesh(indicatorGeometry, indicatorMaterial);
+        indicator.position.copy(light.position);
+        indicator.visible = lightsVisible;
+        scene.add(indicator);
+        lightHelpers.push(indicator);
+    });
 }
 
 function createEnvironmentObjects() {
@@ -194,9 +210,6 @@ function loadGLBModel() {
 }
 
 function setupUIControls() {
-    const lightToggle = document.getElementById('lightToggle');
-    const lightIntensity = document.getElementById('lightIntensity');
-    const intensityValue = document.getElementById('intensityValue');
     const backgroundColor = document.getElementById('backgroundColor');
     const materialsToggle = document.getElementById('materialsToggle');
     const wireframeToggle = document.getElementById('wireframeToggle');
@@ -210,19 +223,14 @@ function setupUIControls() {
     const rotationYValue = document.getElementById('rotationYValue');
     const rotationZValue = document.getElementById('rotationZValue');
     
-    lightToggle.addEventListener('click', function() {
-        lightEnabled = !lightEnabled;
-        additionalLight.visible = lightEnabled;
-        lightToggle.textContent = `Additional Light: ${lightEnabled ? 'ON' : 'OFF'}`;
-        lightToggle.className = lightEnabled ? '' : 'off';
-    });
+    // Setup controls for each light
+    for (let i = 1; i <= 5; i++) {
+        setupLightControls(i);
+    }
     
-    lightIntensity.addEventListener('input', function() {
-        const value = parseFloat(this.value);
-        additionalLight.intensity = value;
-        intensityValue.textContent = value.toFixed(1);
-        updateBackgroundColor();
-    });
+    // Setup UI controls
+    setupUIToggleAndCollapse();
+    
     
     backgroundColor.addEventListener('input', function() {
         baseBackgroundColor = new THREE.Color(this.value);
@@ -275,11 +283,127 @@ function setupUIControls() {
     });
 }
 
+function setupLightControls(lightIndex) {
+    const toggle = document.getElementById(`light${lightIndex}Toggle`);
+    const colorPicker = document.getElementById(`light${lightIndex}Color`);
+    const intensity = document.getElementById(`light${lightIndex}Intensity`);
+    const intensityValue = document.getElementById(`light${lightIndex}IntensityValue`);
+    const rotationX = document.getElementById(`light${lightIndex}RotationX`);
+    const rotationY = document.getElementById(`light${lightIndex}RotationY`);
+    const rotationXValue = document.getElementById(`light${lightIndex}RotationXValue`);
+    const rotationYValue = document.getElementById(`light${lightIndex}RotationYValue`);
+    
+    const light = lights[lightIndex - 1];
+    const lightHelperIndex = (lightIndex - 1) * 2; // Each light has 2 helpers
+    
+    toggle.addEventListener('click', function() {
+        lightStates[lightIndex - 1] = !lightStates[lightIndex - 1];
+        light.visible = lightStates[lightIndex - 1];
+        toggle.textContent = `Light ${lightIndex}: ${lightStates[lightIndex - 1] ? 'ON' : 'OFF'}`;
+        toggle.className = lightStates[lightIndex - 1] ? '' : 'off';
+        updateBackgroundColor();
+    });
+    
+    colorPicker.addEventListener('input', function() {
+        const color = new THREE.Color(this.value);
+        light.color = color;
+        // Update indicator color
+        if (lightHelpers[lightHelperIndex + 1] && lightHelpers[lightHelperIndex + 1].material) {
+            lightHelpers[lightHelperIndex + 1].material.color = color;
+        }
+    });
+    
+    intensity.addEventListener('input', function() {
+        const value = parseFloat(this.value);
+        light.intensity = value;
+        intensityValue.textContent = value.toFixed(1);
+        updateBackgroundColor();
+    });
+    
+    rotationX.addEventListener('input', function() {
+        const value = parseFloat(this.value);
+        updateLightPosition(lightIndex - 1);
+        rotationXValue.textContent = value + '°';
+    });
+    
+    rotationY.addEventListener('input', function() {
+        const value = parseFloat(this.value);
+        updateLightPosition(lightIndex - 1);
+        rotationYValue.textContent = value + '°';
+    });
+}
+
+function updateLightPosition(lightIndex) {
+    const light = lights[lightIndex];
+    const rotX = parseFloat(document.getElementById(`light${lightIndex + 1}RotationX`).value) * Math.PI / 180;
+    const rotY = parseFloat(document.getElementById(`light${lightIndex + 1}RotationY`).value) * Math.PI / 180;
+    
+    // Calculate position based on spherical coordinates
+    const distance = 12;
+    const x = distance * Math.sin(rotX) * Math.cos(rotY);
+    const y = distance * Math.cos(rotX);
+    const z = distance * Math.sin(rotX) * Math.sin(rotY);
+    
+    light.position.set(x, y, z);
+    
+    // Update light helper positions
+    const helperIndex = lightIndex * 2;
+    if (lightHelpers[helperIndex + 1]) {
+        lightHelpers[helperIndex + 1].position.copy(light.position);
+    }
+}
+
 function updateBackgroundColor() {
-    const lightIntensity = parseFloat(document.getElementById('lightIntensity').value);
-    const dimFactor = Math.max(0.1, lightIntensity / 2); // Minimum 10% brightness, max 50% at intensity 1.0
+    // Calculate combined light intensity from all enabled lights
+    let totalIntensity = 0;
+    lights.forEach((light, index) => {
+        if (lightStates[index]) {
+            totalIntensity += light.intensity;
+        }
+    });
+    
+    const dimFactor = Math.max(0.1, Math.min(1, totalIntensity / 3)); // Scale based on total intensity
     const dimmedColor = baseBackgroundColor.clone().multiplyScalar(dimFactor);
     scene.background = dimmedColor;
+}
+
+function setupUIToggleAndCollapse() {
+    const uiToggle = document.getElementById('uiToggle');
+    const topPanel = document.getElementById('topPanel');
+    const bottomPanel = document.getElementById('bottomPanel');
+    let uiVisible = true;
+    
+    // UI Toggle functionality
+    uiToggle.addEventListener('click', function() {
+        uiVisible = !uiVisible;
+        if (uiVisible) {
+            topPanel.classList.remove('hidden');
+            bottomPanel.classList.remove('hidden');
+            uiToggle.textContent = 'Hide UI';
+        } else {
+            topPanel.classList.add('hidden');
+            bottomPanel.classList.add('hidden');
+            uiToggle.textContent = 'Show UI';
+        }
+    });
+    
+    // Collapsible sections functionality
+    const sectionHeaders = document.querySelectorAll('.section-header');
+    sectionHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            const sectionName = this.getAttribute('data-section');
+            const content = document.getElementById(sectionName + '-content');
+            const isCollapsed = content.classList.contains('collapsed');
+            
+            if (isCollapsed) {
+                content.classList.remove('collapsed');
+                this.classList.remove('collapsed');
+            } else {
+                content.classList.add('collapsed');
+                this.classList.add('collapsed');
+            }
+        });
+    });
 }
 
 function toggleMaterials() {
