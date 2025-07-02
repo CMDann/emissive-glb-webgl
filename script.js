@@ -3,6 +3,11 @@ let additionalLight;
 let loadedModel;
 let lightEnabled = true;
 let baseBackgroundColor = new THREE.Color(0x0a0a0a);
+let materialsEnabled = true;
+let wireframeEnabled = false;
+let lightsVisible = false;
+let lightHelpers = [];
+let originalMaterials = new Map();
 
 function init() {
     // Scene setup
@@ -32,6 +37,9 @@ function init() {
     // Lighting setup
     setupLighting();
     
+    // Setup light helpers
+    setupLightHelpers();
+    
     // Create environment objects
     createEnvironmentObjects();
     
@@ -60,6 +68,23 @@ function setupLighting() {
     additionalLight.shadow.mapSize.width = 2048;
     additionalLight.shadow.mapSize.height = 2048;
     scene.add(additionalLight);
+}
+
+function setupLightHelpers() {
+    // DirectionalLight helper
+    const directionalLightHelper = new THREE.DirectionalLightHelper(additionalLight, 2);
+    directionalLightHelper.visible = lightsVisible;
+    scene.add(directionalLightHelper);
+    lightHelpers.push(directionalLightHelper);
+    
+    // Light position indicator (sphere)
+    const lightIndicatorGeometry = new THREE.SphereGeometry(0.2, 8, 8);
+    const lightIndicatorMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+    const lightIndicator = new THREE.Mesh(lightIndicatorGeometry, lightIndicatorMaterial);
+    lightIndicator.position.copy(additionalLight.position);
+    lightIndicator.visible = lightsVisible;
+    scene.add(lightIndicator);
+    lightHelpers.push(lightIndicator);
 }
 
 function createEnvironmentObjects() {
@@ -119,12 +144,17 @@ function loadGLBModel() {
                     child.castShadow = true;
                     child.receiveShadow = true;
                     
-                    // Check if material has emissive properties
-                    if (child.material && child.material.emissive) {
-                        console.log('Found emissive material:', child.material);
-                        // Ensure emissive intensity is visible
-                        if (child.material.emissiveIntensity !== undefined) {
-                            child.material.emissiveIntensity = Math.max(child.material.emissiveIntensity, 1);
+                    // Store original material for toggle functionality
+                    if (child.material) {
+                        originalMaterials.set(child, child.material.clone());
+                        
+                        // Check if material has emissive properties
+                        if (child.material.emissive) {
+                            console.log('Found emissive material:', child.material);
+                            // Ensure emissive intensity is visible
+                            if (child.material.emissiveIntensity !== undefined) {
+                                child.material.emissiveIntensity = Math.max(child.material.emissiveIntensity, 1);
+                            }
                         }
                     }
                 }
@@ -162,6 +192,9 @@ function setupUIControls() {
     const lightIntensity = document.getElementById('lightIntensity');
     const intensityValue = document.getElementById('intensityValue');
     const backgroundColor = document.getElementById('backgroundColor');
+    const materialsToggle = document.getElementById('materialsToggle');
+    const wireframeToggle = document.getElementById('wireframeToggle');
+    const lightsToggle = document.getElementById('lightsToggle');
     
     lightToggle.addEventListener('click', function() {
         lightEnabled = !lightEnabled;
@@ -181,6 +214,27 @@ function setupUIControls() {
         baseBackgroundColor = new THREE.Color(this.value);
         updateBackgroundColor();
     });
+    
+    materialsToggle.addEventListener('click', function() {
+        materialsEnabled = !materialsEnabled;
+        toggleMaterials();
+        materialsToggle.textContent = `Materials: ${materialsEnabled ? 'ON' : 'OFF'}`;
+        materialsToggle.className = materialsEnabled ? '' : 'off';
+    });
+    
+    wireframeToggle.addEventListener('click', function() {
+        wireframeEnabled = !wireframeEnabled;
+        toggleWireframe();
+        wireframeToggle.textContent = `Wireframe: ${wireframeEnabled ? 'ON' : 'OFF'}`;
+        wireframeToggle.className = wireframeEnabled ? 'off' : '';
+    });
+    
+    lightsToggle.addEventListener('click', function() {
+        lightsVisible = !lightsVisible;
+        toggleLightVisibility();
+        lightsToggle.textContent = `Show Lights: ${lightsVisible ? 'ON' : 'OFF'}`;
+        lightsToggle.className = lightsVisible ? '' : 'off';
+    });
 }
 
 function updateBackgroundColor() {
@@ -188,6 +242,43 @@ function updateBackgroundColor() {
     const dimFactor = Math.max(0.1, lightIntensity / 2); // Minimum 10% brightness, max 50% at intensity 1.0
     const dimmedColor = baseBackgroundColor.clone().multiplyScalar(dimFactor);
     scene.background = dimmedColor;
+}
+
+function toggleMaterials() {
+    scene.traverse(function(child) {
+        if (child.isMesh && child.material) {
+            if (materialsEnabled) {
+                // Restore original material
+                const originalMaterial = originalMaterials.get(child);
+                if (originalMaterial) {
+                    child.material = originalMaterial.clone();
+                }
+            } else {
+                // Use basic material with no textures
+                child.material = new THREE.MeshBasicMaterial({ color: 0x888888 });
+            }
+        }
+    });
+}
+
+function toggleWireframe() {
+    scene.traverse(function(child) {
+        if (child.isMesh && child.material) {
+            if (Array.isArray(child.material)) {
+                child.material.forEach(mat => {
+                    mat.wireframe = wireframeEnabled;
+                });
+            } else {
+                child.material.wireframe = wireframeEnabled;
+            }
+        }
+    });
+}
+
+function toggleLightVisibility() {
+    lightHelpers.forEach(helper => {
+        helper.visible = lightsVisible;
+    });
 }
 
 function animate() {
