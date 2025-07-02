@@ -164,6 +164,44 @@
                         <div class="control-group">
                             <button id="lightsToggle">Show Lights: OFF</button>
                         </div>
+                        <div class="control-group">
+                            <button id="particlesToggle">Particles: OFF</button>
+                            <label for="particleCount">Count:</label>
+                            <input type="range" id="particleCount" min="100" max="2000" step="100" value="500">
+                            <span id="particleCountValue">500</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="collapsible-section">
+                <h4 class="section-header" data-section="inspector">
+                    <span class="collapse-icon">▼</span> Object Inspector
+                </h4>
+                <div class="section-content" id="inspector-content">
+                    <div class="controls-grid">
+                        <div class="control-group">
+                            <button id="boundingBoxToggle">Bounding Box: OFF</button>
+                            <button id="objectWireframeToggle">Object Wireframe: OFF</button>
+                        </div>
+                        <div class="control-group">
+                            <label>Geometry Info:</label>
+                            <div id="geometryInfo" class="info-display">No object loaded</div>
+                        </div>
+                        <div class="control-group">
+                            <label>Material Info:</label>
+                            <div id="materialInfo" class="info-display">No materials found</div>
+                        </div>
+                        <div class="control-group">
+                            <label for="emissiveIntensity">Emissive Intensity:</label>
+                            <input type="range" id="emissiveIntensity" min="0" max="5" step="0.1" value="1">
+                            <span id="emissiveIntensityValue">1.0</span>
+                        </div>
+                        <div class="control-group">
+                            <label for="objectOpacity">Object Opacity:</label>
+                            <input type="range" id="objectOpacity" min="0" max="1" step="0.1" value="1">
+                            <span id="objectOpacityValue">1.0</span>
+                        </div>
                     </div>
                 </div>
             </div>

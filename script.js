@@ -10,6 +10,13 @@ let lightHelpers = [];
 let originalMaterials = new Map();
 let autoScaleFactor = 1;
 let manualScale = 1;
+let particleSystem;
+let particlesEnabled = false;
+let particleCount = 500;
+let boundingBoxHelper;
+let boundingBoxVisible = false;
+let objectWireframeEnabled = false;
+let emissiveMaterials = [];
 
 function init() {
     // Scene setup
@@ -44,6 +51,9 @@ function init() {
     
     // Create environment objects
     createEnvironmentObjects();
+    
+    // Setup particle system
+    setupParticleSystem();
     
     // Load the GLB model
     loadGLBModel();
@@ -146,6 +156,247 @@ function createEnvironmentObjects() {
     scene.add(plane);
 }
 
+function setupParticleSystem() {
+    const particleGeometry = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
+    const particleVelocities = new Float32Array(particleCount * 3);
+    
+    // Initialize particle positions and velocities
+    for (let i = 0; i < particleCount; i++) {
+        const i3 = i * 3;
+        
+        // Random positions in a sphere around the center
+        const radius = Math.random() * 8 + 2;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.random() * Math.PI;
+        
+        particlePositions[i3] = radius * Math.sin(phi) * Math.cos(theta);
+        particlePositions[i3 + 1] = radius * Math.cos(phi);
+        particlePositions[i3 + 2] = radius * Math.sin(phi) * Math.sin(theta);
+        
+        // Random velocities
+        particleVelocities[i3] = (Math.random() - 0.5) * 0.02;
+        particleVelocities[i3 + 1] = (Math.random() - 0.5) * 0.02;
+        particleVelocities[i3 + 2] = (Math.random() - 0.5) * 0.02;
+    }
+    
+    particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    particleGeometry.setAttribute('velocity', new THREE.BufferAttribute(particleVelocities, 3));
+    
+    // Create particle material with emissive glow
+    const particleMaterial = new THREE.PointsMaterial({
+        color: 0x44aaff,
+        size: 0.1,
+        transparent: true,
+        opacity: 0.8,
+        blending: THREE.AdditiveBlending
+    });
+    
+    particleSystem = new THREE.Points(particleGeometry, particleMaterial);
+    particleSystem.visible = particlesEnabled;
+    scene.add(particleSystem);
+}
+
+function updateParticles() {
+    if (!particleSystem || !particlesEnabled) return;
+    
+    const positions = particleSystem.geometry.attributes.position.array;
+    const velocities = particleSystem.geometry.attributes.velocity.array;
+    
+    for (let i = 0; i < particleCount; i++) {
+        const i3 = i * 3;
+        
+        // Update positions based on velocities
+        positions[i3] += velocities[i3];
+        positions[i3 + 1] += velocities[i3 + 1];
+        positions[i3 + 2] += velocities[i3 + 2];
+        
+        // Gravity effect
+        velocities[i3 + 1] -= 0.0005;
+        
+        // Bounce off the ground
+        if (positions[i3 + 1] < -2) {
+            positions[i3 + 1] = -2;
+            velocities[i3 + 1] *= -0.8;
+        }
+        
+        // Reset particles that go too far
+        const distance = Math.sqrt(
+            positions[i3] * positions[i3] + 
+            positions[i3 + 1] * positions[i3 + 1] + 
+            positions[i3 + 2] * positions[i3 + 2]
+        );
+        
+        if (distance > 15) {
+            // Reset to random position near center
+            const radius = Math.random() * 2 + 1;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.random() * Math.PI;
+            
+            positions[i3] = radius * Math.sin(phi) * Math.cos(theta);
+            positions[i3 + 1] = radius * Math.cos(phi) + 2;
+            positions[i3 + 2] = radius * Math.sin(phi) * Math.sin(theta);
+            
+            velocities[i3] = (Math.random() - 0.5) * 0.02;
+            velocities[i3 + 1] = (Math.random() - 0.5) * 0.02;
+            velocities[i3 + 2] = (Math.random() - 0.5) * 0.02;
+        }
+    }
+    
+    particleSystem.geometry.attributes.position.needsUpdate = true;
+    particleSystem.geometry.attributes.velocity.needsUpdate = true;
+}
+
+function recreateParticleSystem() {
+    if (particleSystem) {
+        scene.remove(particleSystem);
+        particleSystem.geometry.dispose();
+        particleSystem.material.dispose();
+    }
+    setupParticleSystem();
+}
+
+function analyzeObject(object) {
+    let totalVertices = 0;
+    let totalFaces = 0;
+    let meshCount = 0;
+    let materialCount = 0;
+    let materialInfo = '';
+    
+    emissiveMaterials = [];
+    
+    object.traverse(function(child) {
+        if (child.isMesh) {
+            meshCount++;
+            
+            if (child.geometry) {
+                if (child.geometry.attributes.position) {
+                    totalVertices += child.geometry.attributes.position.count;
+                }
+                if (child.geometry.index) {
+                    totalFaces += child.geometry.index.count / 3;
+                } else if (child.geometry.attributes.position) {
+                    totalFaces += child.geometry.attributes.position.count / 3;
+                }
+            }
+            
+            if (child.material) {
+                materialCount++;
+                
+                if (Array.isArray(child.material)) {
+                    child.material.forEach(mat => {
+                        if (mat.emissive && mat.emissive.getHex() !== 0) {
+                            emissiveMaterials.push(mat);
+                        }
+                    });
+                } else {
+                    if (child.material.emissive && child.material.emissive.getHex() !== 0) {
+                        emissiveMaterials.push(child.material);
+                    }
+                }
+            }
+        }
+    });
+    
+    // Update geometry info
+    const geometryInfo = document.getElementById('geometryInfo');
+    geometryInfo.textContent = `Meshes: ${meshCount}\nVertices: ${totalVertices.toLocaleString()}\nFaces: ${Math.round(totalFaces).toLocaleString()}`;
+    
+    // Update material info
+    const materialInfoEl = document.getElementById('materialInfo');
+    if (emissiveMaterials.length > 0) {
+        materialInfo = `Materials: ${materialCount}\nEmissive materials: ${emissiveMaterials.length}\n`;
+        emissiveMaterials.forEach((mat, i) => {
+            const emissiveColor = mat.emissive.getHexString();
+            const intensity = mat.emissiveIntensity || 1;
+            materialInfo += `Emissive ${i + 1}: #${emissiveColor} (${intensity})\n`;
+        });
+    } else {
+        materialInfo = `Materials: ${materialCount}\nNo emissive materials found`;
+    }
+    materialInfoEl.textContent = materialInfo;
+    
+    // Create bounding box helper
+    createBoundingBoxHelper();
+}
+
+function createBoundingBoxHelper() {
+    if (!loadedModel) return;
+    
+    // Remove existing bounding box
+    if (boundingBoxHelper) {
+        scene.remove(boundingBoxHelper);
+        boundingBoxHelper.geometry.dispose();
+        boundingBoxHelper.material.dispose();
+    }
+    
+    const box = new THREE.Box3().setFromObject(loadedModel);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    
+    const geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
+    const material = new THREE.MeshBasicMaterial({
+        color: 0xff00ff,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.5
+    });
+    
+    boundingBoxHelper = new THREE.Mesh(geometry, material);
+    boundingBoxHelper.position.copy(center);
+    boundingBoxHelper.visible = boundingBoxVisible;
+    scene.add(boundingBoxHelper);
+}
+
+function toggleBoundingBox() {
+    boundingBoxVisible = !boundingBoxVisible;
+    if (boundingBoxHelper) {
+        boundingBoxHelper.visible = boundingBoxVisible;
+    }
+}
+
+function toggleObjectWireframe() {
+    objectWireframeEnabled = !objectWireframeEnabled;
+    
+    if (loadedModel) {
+        loadedModel.traverse(function(child) {
+            if (child.isMesh && child.material) {
+                if (Array.isArray(child.material)) {
+                    child.material.forEach(mat => {
+                        mat.wireframe = objectWireframeEnabled;
+                    });
+                } else {
+                    child.material.wireframe = objectWireframeEnabled;
+                }
+            }
+        });
+    }
+}
+
+function updateEmissiveIntensity(value) {
+    emissiveMaterials.forEach(material => {
+        material.emissiveIntensity = parseFloat(value);
+    });
+}
+
+function updateObjectOpacity(value) {
+    if (loadedModel) {
+        loadedModel.traverse(function(child) {
+            if (child.isMesh && child.material) {
+                if (Array.isArray(child.material)) {
+                    child.material.forEach(mat => {
+                        mat.transparent = value < 1;
+                        mat.opacity = parseFloat(value);
+                    });
+                } else {
+                    child.material.transparent = value < 1;
+                    child.material.opacity = parseFloat(value);
+                }
+            }
+        });
+    }
+}
+
 function loadGLBModel() {
     const loader = new THREE.GLTFLoader();
     
@@ -181,6 +432,9 @@ function loadGLBModel() {
             // Auto-scale model to fit within environment bounds
             autoScaleModel(loadedModel);
             
+            // Analyze and update inspector info
+            analyzeObject(loadedModel);
+            
             scene.add(loadedModel);
             document.getElementById('modelStatus').textContent = 'test.glb loaded successfully';
         },
@@ -204,6 +458,10 @@ function loadGLBModel() {
             const placeholder = new THREE.Mesh(geometry, material);
             placeholder.position.set(0, 0, 0);
             loadedModel = placeholder; // Assign for transform controls
+            
+            // Analyze placeholder
+            analyzeObject(loadedModel);
+            
             scene.add(placeholder);
         }
     );
@@ -214,6 +472,15 @@ function setupUIControls() {
     const materialsToggle = document.getElementById('materialsToggle');
     const wireframeToggle = document.getElementById('wireframeToggle');
     const lightsToggle = document.getElementById('lightsToggle');
+    const particlesToggle = document.getElementById('particlesToggle');
+    const particleCountSlider = document.getElementById('particleCount');
+    const particleCountValue = document.getElementById('particleCountValue');
+    const boundingBoxToggle = document.getElementById('boundingBoxToggle');
+    const objectWireframeToggle = document.getElementById('objectWireframeToggle');
+    const emissiveIntensitySlider = document.getElementById('emissiveIntensity');
+    const emissiveIntensityValue = document.getElementById('emissiveIntensityValue');
+    const objectOpacitySlider = document.getElementById('objectOpacity');
+    const objectOpacityValue = document.getElementById('objectOpacityValue');
     const modelScale = document.getElementById('modelScale');
     const scaleValue = document.getElementById('scaleValue');
     const modelRotationX = document.getElementById('modelRotationX');
@@ -256,6 +523,45 @@ function setupUIControls() {
         toggleLightVisibility();
         lightsToggle.textContent = `Show Lights: ${lightsVisible ? 'ON' : 'OFF'}`;
         lightsToggle.className = lightsVisible ? '' : 'off';
+    });
+    
+    particlesToggle.addEventListener('click', function() {
+        particlesEnabled = !particlesEnabled;
+        if (particleSystem) {
+            particleSystem.visible = particlesEnabled;
+        }
+        particlesToggle.textContent = `Particles: ${particlesEnabled ? 'ON' : 'OFF'}`;
+        particlesToggle.className = particlesEnabled ? '' : 'off';
+    });
+    
+    particleCountSlider.addEventListener('input', function() {
+        particleCount = parseInt(this.value);
+        particleCountValue.textContent = particleCount;
+        recreateParticleSystem();
+    });
+    
+    boundingBoxToggle.addEventListener('click', function() {
+        toggleBoundingBox();
+        boundingBoxToggle.textContent = `Bounding Box: ${boundingBoxVisible ? 'ON' : 'OFF'}`;
+        boundingBoxToggle.className = boundingBoxVisible ? '' : 'off';
+    });
+    
+    objectWireframeToggle.addEventListener('click', function() {
+        toggleObjectWireframe();
+        objectWireframeToggle.textContent = `Object Wireframe: ${objectWireframeEnabled ? 'ON' : 'OFF'}`;
+        objectWireframeToggle.className = objectWireframeEnabled ? '' : 'off';
+    });
+    
+    emissiveIntensitySlider.addEventListener('input', function() {
+        const value = parseFloat(this.value);
+        updateEmissiveIntensity(value);
+        emissiveIntensityValue.textContent = value.toFixed(1);
+    });
+    
+    objectOpacitySlider.addEventListener('input', function() {
+        const value = parseFloat(this.value);
+        updateObjectOpacity(value);
+        objectOpacityValue.textContent = value.toFixed(1);
     });
     
     modelScale.addEventListener('input', function() {
@@ -489,6 +795,7 @@ function updateModelTransform() {
 function animate() {
     requestAnimationFrame(animate);
     controls.update();
+    updateParticles();
     renderer.render(scene, camera);
 }
 

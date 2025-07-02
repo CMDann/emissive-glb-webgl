@@ -206,6 +206,24 @@ span {
     text-align: center;
 }
 
+/* Info display elements */
+.info-display {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    padding: 8px;
+    font-size: 11px;
+    color: #ccc;
+    font-family: monospace;
+    min-height: 40px;
+    max-height: 80px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    line-height: 1.3;
+    flex: 1;
+    min-width: 200px;
+}
+
 /* Status Info */
 .status-info {
     margin-top: 15px;
