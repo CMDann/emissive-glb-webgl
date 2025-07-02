@@ -72,8 +72,9 @@ function init() {
     // Setup particle system
     setupParticleSystem();
     
-    // Discover available models
-    discoverModels();
+    // Load models and shaders from database
+    loadModelsFromDatabase();
+    loadShadersFromDatabase();
     
     // Load the default GLB model
     loadGLBModel();
@@ -518,26 +519,26 @@ function resetToOriginalMaterials() {
     hideShaderError();
 }
 
-function loadShaderFromFile(filename) {
-    if (!filename) return;
+function loadShaderFromFile(shaderId) {
+    if (!shaderId) return;
     
     const shaderCodeElement = document.getElementById('shaderCode');
     const errorElement = document.getElementById('shaderError');
     
-    fetch(`./examples/${filename}.txt`)
+    fetch(`/api/shaders/${shaderId}/content`)
         .then(response => {
             if (!response.ok) {
-                throw new Error(`Failed to load ${filename}.txt`);
+                throw new Error(`Failed to load shader with ID ${shaderId}`);
             }
-            return response.text();
+            return response.json();
         })
-        .then(shaderCode => {
-            shaderCodeElement.value = shaderCode;
+        .then(data => {
+            shaderCodeElement.value = data.content;
             hideShaderError();
         })
         .catch(error => {
             showShaderError(`Error loading shader: ${error.message}`);
-            console.error('Error loading shader file:', error);
+            console.error('Error loading shader from database:', error);
         });
 }
 
@@ -1067,7 +1068,8 @@ function setupUIControls() {
     });
     
     refreshModelsBtn.addEventListener('click', function() {
-        discoverModels();
+        loadModelsFromDatabase();
+        loadShadersFromDatabase();
     });
     
     modelScale.addEventListener('input', function() {
@@ -1093,6 +1095,9 @@ function setupUIControls() {
         updateModelTransform();
         rotationZValue.textContent = value + '°';
     });
+    
+    // Setup upload form handlers
+    setupUploadHandlers();
 }
 
 function setupLightControls(lightIndex) {
@@ -1316,6 +1321,184 @@ function onWindowResize() {
 }
 
 window.addEventListener('resize', onWindowResize);
+
+function setupUploadHandlers() {
+    const modelUploadForm = document.getElementById('modelUploadForm');
+    const shaderUploadForm = document.getElementById('shaderUploadForm');
+    const uploadStatus = document.getElementById('uploadStatus');
+    
+    if (modelUploadForm) {
+        modelUploadForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await handleModelUpload(uploadStatus);
+        });
+    }
+    
+    if (shaderUploadForm) {
+        shaderUploadForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await handleShaderUpload(uploadStatus);
+        });
+    }
+}
+
+async function handleModelUpload(statusElement) {
+    const formData = new FormData();
+    const fileInput = document.getElementById('modelFile');
+    const nameInput = document.getElementById('modelName');
+    const descriptionInput = document.getElementById('modelDescription');
+    const tagsInput = document.getElementById('modelTags');
+    
+    if (!fileInput.files[0] || !nameInput.value.trim()) {
+        showUploadStatus(statusElement, 'Please fill in required fields', 'error');
+        return;
+    }
+    
+    formData.append('model', fileInput.files[0]);
+    formData.append('name', nameInput.value.trim());
+    formData.append('description', descriptionInput.value.trim());
+    formData.append('tags', tagsInput.value.trim());
+    
+    try {
+        showUploadStatus(statusElement, 'Uploading model...', 'loading');
+        
+        const response = await fetch('/api/upload/model', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showUploadStatus(statusElement, `Model "${result.filename}" uploaded successfully!`, 'success');
+            // Clear form
+            document.getElementById('modelUploadForm').reset();
+            // Refresh model list
+            await loadModelsFromDatabase();
+        } else {
+            showUploadStatus(statusElement, `Upload failed: ${result.error}`, 'error');
+        }
+    } catch (error) {
+        showUploadStatus(statusElement, `Upload error: ${error.message}`, 'error');
+    }
+}
+
+async function handleShaderUpload(statusElement) {
+    const formData = new FormData();
+    const fileInput = document.getElementById('shaderFile');
+    const nameInput = document.getElementById('shaderName');
+    const descriptionInput = document.getElementById('shaderDescription');
+    const categorySelect = document.getElementById('shaderCategory');
+    const tagsInput = document.getElementById('shaderTags');
+    
+    if (!fileInput.files[0] || !nameInput.value.trim()) {
+        showUploadStatus(statusElement, 'Please fill in required fields', 'error');
+        return;
+    }
+    
+    formData.append('shader', fileInput.files[0]);
+    formData.append('name', nameInput.value.trim());
+    formData.append('description', descriptionInput.value.trim());
+    formData.append('category', categorySelect.value);
+    formData.append('tags', tagsInput.value.trim());
+    
+    try {
+        showUploadStatus(statusElement, 'Uploading shader...', 'loading');
+        
+        const response = await fetch('/api/upload/shader', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showUploadStatus(statusElement, `Shader "${result.filename}" uploaded successfully!`, 'success');
+            // Clear form
+            document.getElementById('shaderUploadForm').reset();
+            // Refresh shader list
+            await loadShadersFromDatabase();
+        } else {
+            showUploadStatus(statusElement, `Upload failed: ${result.error}`, 'error');
+        }
+    } catch (error) {
+        showUploadStatus(statusElement, `Upload error: ${error.message}`, 'error');
+    }
+}
+
+function showUploadStatus(element, message, type) {
+    element.textContent = message;
+    element.className = `upload-status ${type}`;
+    
+    if (type === 'success') {
+        setTimeout(() => {
+            element.textContent = '';
+            element.className = 'upload-status';
+        }, 3000);
+    }
+}
+
+async function loadModelsFromDatabase() {
+    try {
+        const response = await fetch('/api/models');
+        const data = await response.json();
+        
+        if (response.ok) {
+            availableModels = data.models.map(model => model.filename);
+            updateModelSelector();
+        } else {
+            console.error('Failed to load models from database:', data.error);
+        }
+    } catch (error) {
+        console.error('Error loading models from database:', error);
+    }
+}
+
+async function loadShadersFromDatabase() {
+    try {
+        const response = await fetch('/api/shaders');
+        const data = await response.json();
+        
+        if (response.ok) {
+            updateShaderSelector(data.shaders);
+        } else {
+            console.error('Failed to load shaders from database:', data.error);
+        }
+    } catch (error) {
+        console.error('Error loading shaders from database:', error);
+    }
+}
+
+function updateShaderSelector(shaders) {
+    const selector = document.getElementById('exampleSelector');
+    if (!selector) return;
+    
+    // Clear existing options except the first one
+    selector.innerHTML = '<option value="">Load Example...</option>';
+    
+    // Group shaders by category
+    const categories = {};
+    shaders.forEach(shader => {
+        const category = shader.category || 'Custom';
+        if (!categories[category]) categories[category] = [];
+        categories[category].push(shader);
+    });
+    
+    // Add options grouped by category
+    Object.keys(categories).sort().forEach(category => {
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = category;
+        
+        categories[category].forEach(shader => {
+            const option = document.createElement('option');
+            option.value = shader.id; // Use database ID instead of filename
+            option.textContent = shader.name;
+            optgroup.appendChild(option);
+        });
+        
+        selector.appendChild(optgroup);
+    });
+}
 
 // Initialize the scene when page loads
 window.addEventListener('DOMContentLoaded', init);

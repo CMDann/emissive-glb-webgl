@@ -280,6 +280,96 @@ span {
     display: none;
 }
 
+/* Upload Sections */
+.upload-section {
+    background: rgba(40, 40, 40, 0.8);
+    padding: 8px;
+    border-radius: 6px;
+    border-left: 2px solid #4CAF50;
+    margin: 4px 0;
+}
+
+.upload-section h5 {
+    margin: 0 0 8px 0;
+    color: #4CAF50;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.upload-section input[type="file"] {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    color: #fff;
+    padding: 4px;
+    font-size: 10px;
+    width: 100%;
+    cursor: pointer;
+}
+
+.upload-section input[type="text"],
+.upload-section textarea,
+.upload-section select {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    color: #fff;
+    padding: 4px;
+    font-size: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.upload-section input[type="text"]::placeholder,
+.upload-section textarea::placeholder {
+    color: #aaa;
+}
+
+.upload-section input[type="text"]:focus,
+.upload-section textarea:focus,
+.upload-section select:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.upload-section textarea {
+    resize: vertical;
+    min-height: 40px;
+    font-family: Arial, sans-serif;
+}
+
+.upload-status {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    padding: 6px;
+    margin-top: 8px;
+    font-size: 10px;
+    color: #fff;
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-status.success {
+    background: rgba(76, 175, 80, 0.2);
+    border-color: #4CAF50;
+    color: #4CAF50;
+}
+
+.upload-status.error {
+    background: rgba(244, 67, 54, 0.2);
+    border-color: #f44336;
+    color: #ff6b6b;
+}
+
+.upload-status.loading {
+    background: rgba(255, 193, 7, 0.2);
+    border-color: #ffc107;
+    color: #ffc107;
+}
+
 /* Status Info */
 .status-info {
     margin-top: 8px;

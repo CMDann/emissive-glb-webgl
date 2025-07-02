@@ -269,6 +269,67 @@ void main() {
             </div>
             
             <div class="collapsible-section">
+                <h4 class="section-header" data-section="uploads">
+                    <span class="collapse-icon">▼</span> Upload Models & Shaders
+                </h4>
+                <div class="section-content" id="uploads-content">
+                    <div class="controls-grid">
+                        <div class="upload-section">
+                            <h5>Upload GLB Model</h5>
+                            <form id="modelUploadForm" enctype="multipart/form-data">
+                                <div class="control-group">
+                                    <input type="file" id="modelFile" accept=".glb" required>
+                                </div>
+                                <div class="control-group">
+                                    <input type="text" id="modelName" placeholder="Model name" required>
+                                </div>
+                                <div class="control-group">
+                                    <textarea id="modelDescription" placeholder="Model description (optional)" rows="2"></textarea>
+                                </div>
+                                <div class="control-group">
+                                    <input type="text" id="modelTags" placeholder="Tags (comma-separated)">
+                                </div>
+                                <div class="control-group">
+                                    <button type="submit">Upload Model</button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <div class="upload-section">
+                            <h5>Upload Shader</h5>
+                            <form id="shaderUploadForm" enctype="multipart/form-data">
+                                <div class="control-group">
+                                    <input type="file" id="shaderFile" accept=".txt,.glsl" required>
+                                </div>
+                                <div class="control-group">
+                                    <input type="text" id="shaderName" placeholder="Shader name" required>
+                                </div>
+                                <div class="control-group">
+                                    <textarea id="shaderDescription" placeholder="Shader description (optional)" rows="2"></textarea>
+                                </div>
+                                <div class="control-group">
+                                    <select id="shaderCategory">
+                                        <option value="Custom">Custom</option>
+                                        <option value="Nature">Nature</option>
+                                        <option value="Mathematical">Mathematical</option>
+                                        <option value="Sci-Fi">Sci-Fi</option>
+                                        <option value="Artistic">Artistic</option>
+                                    </select>
+                                </div>
+                                <div class="control-group">
+                                    <input type="text" id="shaderTags" placeholder="Tags (comma-separated)">
+                                </div>
+                                <div class="control-group">
+                                    <button type="submit">Upload Shader</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div id="uploadStatus" class="upload-status"></div>
+                </div>
+            </div>
+
+            <div class="collapsible-section">
                 <h4 class="section-header" data-section="model">
                     <span class="collapse-icon">▼</span> Model Transform
                 </h4>
