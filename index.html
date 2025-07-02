@@ -31,6 +31,26 @@
         <div class="control-group">
             <button id="lightsToggle">Show Lights: OFF</button>
         </div>
+        <div class="control-group">
+            <label for="modelScale">Model Scale:</label>
+            <input type="range" id="modelScale" min="0.1" max="3" step="0.1" value="1">
+            <span id="scaleValue">1.0</span>
+        </div>
+        <div class="control-group">
+            <label for="modelRotationX">Rotation X:</label>
+            <input type="range" id="modelRotationX" min="0" max="360" step="5" value="0">
+            <span id="rotationXValue">0°</span>
+        </div>
+        <div class="control-group">
+            <label for="modelRotationY">Rotation Y:</label>
+            <input type="range" id="modelRotationY" min="0" max="360" step="5" value="0">
+            <span id="rotationYValue">0°</span>
+        </div>
+        <div class="control-group">
+            <label for="modelRotationZ">Rotation Z:</label>
+            <input type="range" id="modelRotationZ" min="0" max="360" step="5" value="0">
+            <span id="rotationZValue">0°</span>
+        </div>
         <p>Use mouse to orbit around the scene</p>
         <p>Model: <span id="modelStatus">Looking for test.glb...</span></p>
     </div>

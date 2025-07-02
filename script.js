@@ -8,6 +8,8 @@ let wireframeEnabled = false;
 let lightsVisible = false;
 let lightHelpers = [];
 let originalMaterials = new Map();
+let autoScaleFactor = 1;
+let manualScale = 1;
 
 function init() {
     // Scene setup
@@ -160,6 +162,9 @@ function loadGLBModel() {
                 }
             });
             
+            // Auto-scale model to fit within environment bounds
+            autoScaleModel(loadedModel);
+            
             scene.add(loadedModel);
             document.getElementById('modelStatus').textContent = 'test.glb loaded successfully';
         },
@@ -182,6 +187,7 @@ function loadGLBModel() {
             });
             const placeholder = new THREE.Mesh(geometry, material);
             placeholder.position.set(0, 0, 0);
+            loadedModel = placeholder; // Assign for transform controls
             scene.add(placeholder);
         }
     );
@@ -195,6 +201,14 @@ function setupUIControls() {
     const materialsToggle = document.getElementById('materialsToggle');
     const wireframeToggle = document.getElementById('wireframeToggle');
     const lightsToggle = document.getElementById('lightsToggle');
+    const modelScale = document.getElementById('modelScale');
+    const scaleValue = document.getElementById('scaleValue');
+    const modelRotationX = document.getElementById('modelRotationX');
+    const modelRotationY = document.getElementById('modelRotationY');
+    const modelRotationZ = document.getElementById('modelRotationZ');
+    const rotationXValue = document.getElementById('rotationXValue');
+    const rotationYValue = document.getElementById('rotationYValue');
+    const rotationZValue = document.getElementById('rotationZValue');
     
     lightToggle.addEventListener('click', function() {
         lightEnabled = !lightEnabled;
@@ -235,6 +249,30 @@ function setupUIControls() {
         lightsToggle.textContent = `Show Lights: ${lightsVisible ? 'ON' : 'OFF'}`;
         lightsToggle.className = lightsVisible ? '' : 'off';
     });
+    
+    modelScale.addEventListener('input', function() {
+        manualScale = parseFloat(this.value);
+        updateModelTransform();
+        scaleValue.textContent = manualScale.toFixed(1);
+    });
+    
+    modelRotationX.addEventListener('input', function() {
+        const value = parseFloat(this.value);
+        updateModelTransform();
+        rotationXValue.textContent = value + '°';
+    });
+    
+    modelRotationY.addEventListener('input', function() {
+        const value = parseFloat(this.value);
+        updateModelTransform();
+        rotationYValue.textContent = value + '°';
+    });
+    
+    modelRotationZ.addEventListener('input', function() {
+        const value = parseFloat(this.value);
+        updateModelTransform();
+        rotationZValue.textContent = value + '°';
+    });
 }
 
 function updateBackgroundColor() {
@@ -252,10 +290,16 @@ function toggleMaterials() {
                 const originalMaterial = originalMaterials.get(child);
                 if (originalMaterial) {
                     child.material = originalMaterial.clone();
+                    // Ensure shadow properties are maintained
+                    child.castShadow = true;
+                    child.receiveShadow = true;
                 }
             } else {
-                // Use basic material with no textures
-                child.material = new THREE.MeshBasicMaterial({ color: 0x888888 });
+                // Use basic material with no textures (basic materials don't receive shadows)
+                child.material = new THREE.MeshLambertMaterial({ color: 0x888888 });
+                // Keep shadow casting/receiving enabled
+                child.castShadow = true;
+                child.receiveShadow = true;
             }
         }
     });
@@ -279,6 +323,43 @@ function toggleLightVisibility() {
     lightHelpers.forEach(helper => {
         helper.visible = lightsVisible;
     });
+}
+
+function autoScaleModel(model) {
+    // Calculate bounding box of the loaded model
+    const box = new THREE.Box3().setFromObject(model);
+    const size = box.getSize(new THREE.Vector3());
+    
+    // Environment bounds (based on surrounding objects at distance 3)
+    const maxEnvironmentSize = 2.5; // Slightly smaller than the 3-unit spacing
+    
+    // Find the largest dimension
+    const maxModelSize = Math.max(size.x, size.y, size.z);
+    
+    // Calculate auto-scale factor to fit within environment
+    if (maxModelSize > maxEnvironmentSize) {
+        autoScaleFactor = maxEnvironmentSize / maxModelSize;
+    } else {
+        autoScaleFactor = 1;
+    }
+    
+    // Apply initial transform
+    updateModelTransform();
+}
+
+function updateModelTransform() {
+    if (!loadedModel) return;
+    
+    // Apply combined auto-scale and manual scale
+    const totalScale = autoScaleFactor * manualScale;
+    loadedModel.scale.set(totalScale, totalScale, totalScale);
+    
+    // Apply rotations
+    const rotX = (parseFloat(document.getElementById('modelRotationX').value) * Math.PI) / 180;
+    const rotY = (parseFloat(document.getElementById('modelRotationY').value) * Math.PI) / 180;
+    const rotZ = (parseFloat(document.getElementById('modelRotationZ').value) * Math.PI) / 180;
+    
+    loadedModel.rotation.set(rotX, rotY, rotZ);
 }
 
 function animate() {
