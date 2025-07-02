@@ -1,0 +1,87 @@
+// Fractal Mandelbrot
+// 3D animated Mandelbrot set with infinite zoom and color cycling
+// Mathematical beauty with complex number iterations
+
+void main() {
+    vec2 uv = vUv;
+    vec3 pos = vPosition;
+    
+    // Create 2D plane from 3D position for fractal calculation
+    vec2 c = vec2(pos.x, pos.y) * 2.0 + vec2(-0.5, 0.0);
+    
+    // Add time-based zoom and pan
+    float zoom = 0.5 + sin(time * 0.3) * 0.3;
+    c *= zoom;
+    
+    // Offset for interesting regions
+    c += vec2(sin(time * 0.2) * 0.3, cos(time * 0.15) * 0.2);
+    
+    // Mandelbrot iteration
+    vec2 z = vec2(0.0);
+    float iterations = 0.0;
+    const float maxIter = 64.0;
+    
+    for(float i = 0.0; i < maxIter; i++) {
+        if(dot(z, z) > 4.0) break;
+        
+        // z = z^2 + c (complex number math)
+        float xnew = z.x * z.x - z.y * z.y + c.x;
+        z.y = 2.0 * z.x * z.y + c.y;
+        z.x = xnew;
+        
+        iterations++;
+    }
+    
+    // Smooth iteration count for better gradients
+    float smoothIter = iterations;
+    if(iterations < maxIter) {
+        smoothIter = iterations - log2(log2(dot(z, z)));
+    }
+    
+    // Normalize iterations
+    float t = smoothIter / maxIter;
+    
+    // 3D depth influence
+    float depth = (pos.z + 2.0) * 0.25;
+    depth = clamp(depth, 0.0, 1.0);
+    
+    // Add depth to fractal
+    t += depth * 0.3;
+    
+    // Time-based color cycling
+    float colorShift = time * 0.5;
+    
+    // Create psychedelic color palette
+    vec3 color1 = vec3(sin(t * 6.28 + colorShift), 
+                       sin(t * 6.28 + colorShift + 2.094), 
+                       sin(t * 6.28 + colorShift + 4.188));
+    
+    vec3 color2 = vec3(sin(t * 12.56 + colorShift + 1.0), 
+                       sin(t * 12.56 + colorShift + 3.0), 
+                       sin(t * 12.56 + colorShift + 5.0));
+    
+    // Mix colors based on fractal density
+    vec3 fractalColor = mix(color1, color2, sin(t * 3.14159) * 0.5 + 0.5);
+    
+    // Enhance colors
+    fractalColor = fractalColor * 0.5 + 0.5;
+    
+    // Add glow effect for fractal edges
+    float glow = 1.0 - smoothstep(0.0, 0.1, abs(t - 0.5));
+    fractalColor += vec3(glow * 0.5);
+    
+    // Pulsing effect
+    float pulse = sin(time * 4.0 + t * 10.0) * 0.2 + 0.8;
+    fractalColor *= pulse;
+    
+    // Special handling for points inside the set (black regions)
+    if(iterations >= maxIter) {
+        fractalColor = vec3(0.0, 0.1, 0.3) * depth;
+    }
+    
+    // Dynamic transparency based on fractal complexity
+    float alpha = 0.7 + (1.0 - t) * 0.3;
+    alpha *= (1.0 + glow);
+    
+    gl_FragColor = vec4(fractalColor, alpha);
+}

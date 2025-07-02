@@ -1,0 +1,105 @@
+// Space Nebula
+// Cosmic gas clouds with stellar formation and interstellar dust
+// Creates deep space atmosphere with swirling cosmic matter
+
+void main() {
+    vec2 uv = vUv;
+    vec3 pos = vPosition;
+    
+    // Large scale nebula structure
+    float nebula1 = sin(pos.x * 2.0 + time * 0.5) * cos(pos.y * 1.5 + time * 0.3);
+    float nebula2 = sin(pos.y * 2.5 + time * 0.7) * cos(pos.z * 2.0 + time * 0.4);
+    float nebula3 = sin(pos.z * 1.8 + time * 0.6) * cos(pos.x * 2.2 + time * 0.5);
+    
+    // Combine nebula layers
+    float nebulaDensity = (nebula1 + nebula2 + nebula3) * 0.333;
+    
+    // Stellar wind effects
+    float windX = sin(pos.x * 4.0 + time * 2.0) * cos(pos.y * 3.0 + time * 1.5);
+    float windY = sin(pos.y * 5.0 + time * 2.5) * cos(pos.z * 4.0 + time * 2.0);
+    float stellarWind = (windX + windY) * 0.5;
+    
+    // Gas density variations
+    float gasCloud1 = sin(pos.x * 6.0 + time * 1.0) * sin(pos.y * 5.0 + time * 1.2);
+    float gasCloud2 = cos(pos.y * 7.0 + time * 1.5) * cos(pos.z * 6.0 + time * 1.0);
+    float gasClouds = (gasCloud1 + gasCloud2) * 0.5;
+    
+    // Dust lanes (dark matter streaks)
+    float dust1 = abs(sin(pos.x * 8.0 + stellarWind * 2.0));
+    float dust2 = abs(cos(pos.y * 10.0 + time * 0.8));
+    float dustLanes = min(dust1, dust2);
+    dustLanes = 1.0 - smoothstep(0.1, 0.3, dustLanes);
+    
+    // Star formation regions (bright, dense areas)
+    float starFormation = gasClouds * nebulaDensity;
+    starFormation = smoothstep(0.3, 0.7, starFormation);
+    
+    // Ionization fronts (shock waves from new stars)
+    float ionizationFront = sin(length(pos.xy) * 5.0 - time * 3.0);
+    ionizationFront = smoothstep(0.7, 1.0, abs(ionizationFront));
+    
+    // Molecular hydrogen regions
+    float h2Region = sin(pos.x * 3.0 + time * 0.8) * 
+                     cos(pos.z * 3.5 + time * 0.6) * 
+                     sin(pos.y * 2.8 + time * 0.9);
+    h2Region = abs(h2Region);
+    
+    // Cosmic ray interactions
+    float cosmicRays = sin(pos.x * 20.0 + time * 10.0) * 
+                       sin(pos.y * 18.0 + time * 8.0) * 
+                       sin(pos.z * 22.0 + time * 12.0);
+    cosmicRays = step(0.95, abs(cosmicRays));
+    
+    // Combine all cosmic elements
+    float cosmicMatter = nebulaDensity * 0.4 + 
+                        gasClouds * 0.3 + 
+                        h2Region * 0.2 + 
+                        stellarWind * 0.1;
+    
+    // Nebula color palette based on gas composition
+    vec3 hydrogenRed = vec3(1.0, 0.3, 0.3);      // H-alpha emission
+    vec3 oxygenGreen = vec3(0.3, 1.0, 0.4);      // OIII emission
+    vec3 sulfurBlue = vec3(0.4, 0.6, 1.0);       // SII emission
+    vec3 deepSpace = vec3(0.05, 0.05, 0.15);     // Space background
+    vec3 dustBrown = vec3(0.3, 0.2, 0.1);        // Dust absorption
+    vec3 starWhite = vec3(1.0, 0.9, 0.8);        // Hot star light
+    
+    // Base nebula color mixing
+    vec3 nebulaColor = deepSpace;
+    nebulaColor = mix(nebulaColor, hydrogenRed, abs(nebula1) * 0.6);
+    nebulaColor = mix(nebulaColor, oxygenGreen, abs(nebula2) * 0.5);
+    nebulaColor = mix(nebulaColor, sulfurBlue, abs(nebula3) * 0.4);
+    
+    // Add star formation regions
+    nebulaColor = mix(nebulaColor, starWhite, starFormation * 0.8);
+    
+    // Dust lane darkening
+    nebulaColor = mix(nebulaColor, dustBrown, dustLanes * 0.6);
+    
+    // Ionization front highlights
+    nebulaColor += hydrogenRed * ionizationFront * 0.7;
+    
+    // Cosmic ray sparkles
+    nebulaColor += starWhite * cosmicRays * 2.0;
+    
+    // Stellar wind color shifts
+    vec3 windColor = vec3(0.8, 0.4, 1.0); // Purple stellar wind
+    nebulaColor = mix(nebulaColor, windColor, abs(stellarWind) * 0.3);
+    
+    // Add depth and distance effects
+    float depth = (pos.z + 2.0) * 0.25;
+    nebulaColor *= (1.0 - depth * 0.4); // Atmospheric perspective
+    
+    // Cosmic breathing effect
+    float cosmicPulse = sin(time * 0.8 + cosmicMatter * 3.14159) * 0.15 + 0.85;
+    nebulaColor *= cosmicPulse;
+    
+    // Transparency for layered nebula effect
+    float alpha = 0.4 + abs(cosmicMatter) * 0.5;
+    alpha += starFormation * 0.4;
+    alpha += ionizationFront * 0.3;
+    alpha -= dustLanes * 0.3;
+    alpha = clamp(alpha, 0.1, 0.9);
+    
+    gl_FragColor = vec4(nebulaColor, alpha);
+}

@@ -1,0 +1,104 @@
+// Digital Matrix
+// Cyberpunk-style digital rain and data streams
+// Creates the iconic Matrix code effect with 3D depth
+
+void main() {
+    vec2 uv = vUv;
+    vec3 pos = vPosition;
+    
+    // Create digital grid
+    vec2 gridPos = pos.xy * 20.0;
+    vec2 gridId = floor(gridPos);
+    vec2 gridLocal = fract(gridPos);
+    
+    // Pseudo-random function for digital characters
+    float random = fract(sin(dot(gridId, vec2(127.1, 311.7))) * 43758.5453);
+    
+    // Digital rain streams
+    float streamSpeed = 5.0 + random * 3.0;
+    float streamOffset = random * 6.28;
+    float stream = fract(pos.y * 0.5 + time * streamSpeed + streamOffset);
+    
+    // Character intensity based on stream position
+    float charIntensity = smoothstep(0.7, 1.0, stream);
+    charIntensity *= smoothstep(0.0, 0.3, stream);
+    
+    // Binary pattern overlay
+    float binaryX = step(0.5, fract(pos.x * 30.0 + time * 2.0));
+    float binaryY = step(0.5, fract(pos.y * 25.0 + time * 3.0));
+    float binaryPattern = binaryX * binaryY;
+    
+    // Glitch effects
+    float glitchTime = floor(time * 10.0) * 0.1;
+    float glitch = sin(pos.x * 50.0 + glitchTime * 100.0) * 
+                   cos(pos.y * 40.0 + glitchTime * 80.0);
+    glitch = step(0.95, abs(glitch));
+    
+    // Data packet transmission
+    float dataPacket = sin((pos.x + pos.y) * 15.0 - time * 8.0);
+    dataPacket = smoothstep(0.8, 1.0, abs(dataPacket));
+    
+    // Hexadecimal grid pattern
+    float hexTime = time * 0.5;
+    float hex = sin(gridId.x * 0.5 + hexTime) * cos(gridId.y * 0.7 + hexTime);
+    hex = step(0.3, abs(hex));
+    
+    // Scanning lines
+    float scanLine = sin(pos.y * 100.0 + time * 20.0);
+    scanLine = smoothstep(0.98, 1.0, abs(scanLine));
+    
+    // Circuit board traces
+    float circuitX = abs(sin(pos.x * 8.0 + time)) - 0.9;
+    float circuitY = abs(sin(pos.y * 6.0 + time * 1.5)) - 0.9;
+    float circuits = max(0.0, circuitX) + max(0.0, circuitY);
+    circuits *= 10.0;
+    
+    // Combine all digital elements
+    float digitalPattern = charIntensity * 0.4 + 
+                          binaryPattern * 0.2 + 
+                          dataPacket * 0.2 + 
+                          hex * 0.1 + 
+                          circuits * 0.1;
+    
+    // Add glitch and scan line effects
+    digitalPattern += glitch * 0.5;
+    digitalPattern += scanLine * 0.3;
+    
+    // Matrix green color palette
+    vec3 darkGreen = vec3(0.0, 0.1, 0.0);       // Background
+    vec3 brightGreen = vec3(0.2, 1.0, 0.3);     // Bright code
+    vec3 whiteFlash = vec3(0.8, 1.0, 0.8);      // Flash/glitch
+    vec3 cyanAccent = vec3(0.0, 0.8, 0.6);      // Data streams
+    
+    // Base digital color
+    vec3 digitalColor = mix(darkGreen, brightGreen, digitalPattern);
+    
+    // Add cyan for data packets
+    digitalColor = mix(digitalColor, cyanAccent, dataPacket * 0.5);
+    
+    // Flash effects for glitches
+    digitalColor = mix(digitalColor, whiteFlash, glitch);
+    
+    // Scan line highlighting
+    digitalColor += vec3(0.1, 0.3, 0.1) * scanLine;
+    
+    // Digital pulse effect
+    float pulse = sin(time * 6.0 + digitalPattern * 10.0) * 0.2 + 0.8;
+    digitalColor *= pulse;
+    
+    // Add depth-based fog
+    float depth = (pos.z + 2.0) * 0.25;
+    digitalColor *= (1.0 - depth * 0.3);
+    
+    // Character sharpening effect
+    float sharpening = 1.0 + charIntensity * 2.0;
+    digitalColor *= sharpening;
+    
+    // Transparency with digital artifacts
+    float alpha = 0.5 + digitalPattern * 0.5;
+    alpha += glitch * 0.4;
+    alpha += dataPacket * 0.3;
+    alpha = clamp(alpha, 0.1, 1.0);
+    
+    gl_FragColor = vec4(digitalColor, alpha);
+}

@@ -499,19 +499,27 @@ function resetToOriginalMaterials() {
     hideShaderError();
 }
 
-function loadExampleShader() {
-    const exampleShader = `// Animated rainbow effect
-void main() {
-    vec2 uv = vUv;
-    vec3 color = vec3(
-        sin(time + uv.x * 3.14159) * 0.5 + 0.5,
-        sin(time + uv.y * 3.14159 + 2.0) * 0.5 + 0.5,
-        sin(time + (uv.x + uv.y) * 3.14159 + 4.0) * 0.5 + 0.5
-    );
-    gl_FragColor = vec4(color, 1.0);
-}`;
+function loadShaderFromFile(filename) {
+    if (!filename) return;
     
-    document.getElementById('shaderCode').value = exampleShader;
+    const shaderCodeElement = document.getElementById('shaderCode');
+    const errorElement = document.getElementById('shaderError');
+    
+    fetch(`./examples/${filename}.txt`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Failed to load ${filename}.txt`);
+            }
+            return response.text();
+        })
+        .then(shaderCode => {
+            shaderCodeElement.value = shaderCode;
+            hideShaderError();
+        })
+        .catch(error => {
+            showShaderError(`Error loading shader: ${error.message}`);
+            console.error('Error loading shader file:', error);
+        });
 }
 
 function updateShaderUniforms() {
@@ -623,7 +631,7 @@ function setupUIControls() {
     const objectOpacityValue = document.getElementById('objectOpacityValue');
     const applyShaderBtn = document.getElementById('applyShader');
     const resetShaderBtn = document.getElementById('resetShader');
-    const loadExampleBtn = document.getElementById('loadExampleShader');
+    const exampleSelector = document.getElementById('exampleSelector');
     const modelScale = document.getElementById('modelScale');
     const scaleValue = document.getElementById('scaleValue');
     const modelRotationX = document.getElementById('modelRotationX');
@@ -709,7 +717,14 @@ function setupUIControls() {
     
     applyShaderBtn.addEventListener('click', applyCustomShader);
     resetShaderBtn.addEventListener('click', resetToOriginalMaterials);
-    loadExampleBtn.addEventListener('click', loadExampleShader);
+    exampleSelector.addEventListener('change', function() {
+        const selectedExample = this.value;
+        if (selectedExample) {
+            loadShaderFromFile(selectedExample);
+            // Reset to default option after loading
+            this.value = '';
+        }
+    });
     
     modelScale.addEventListener('input', function() {
         manualScale = parseFloat(this.value);
@@ -822,7 +837,6 @@ function updateBackgroundColor() {
 
 function setupUIToggleAndCollapse() {
     const uiToggle = document.getElementById('uiToggle');
-    const topPanel = document.getElementById('topPanel');
     const bottomPanel = document.getElementById('bottomPanel');
     let uiVisible = true;
     
@@ -830,11 +844,9 @@ function setupUIToggleAndCollapse() {
     uiToggle.addEventListener('click', function() {
         uiVisible = !uiVisible;
         if (uiVisible) {
-            topPanel.classList.remove('hidden');
             bottomPanel.classList.remove('hidden');
             uiToggle.textContent = 'Hide UI';
         } else {
-            topPanel.classList.add('hidden');
             bottomPanel.classList.add('hidden');
             uiToggle.textContent = 'Show UI';
         }

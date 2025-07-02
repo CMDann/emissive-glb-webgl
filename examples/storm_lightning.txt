@@ -1,0 +1,76 @@
+// Storm Lightning
+// Electric storm with lightning bolts and atmospheric turbulence
+// Creates dramatic weather effects with electrical discharges
+
+void main() {
+    vec2 uv = vUv;
+    vec3 pos = vPosition;
+    
+    // Atmospheric turbulence
+    float turb1 = sin(pos.x * 4.0 + time * 3.0) * cos(pos.y * 3.0 + time * 2.0);
+    float turb2 = sin(pos.y * 6.0 + time * 4.0) * cos(pos.z * 4.0 + time * 3.0);
+    float turb3 = sin(pos.z * 5.0 + time * 2.5) * cos(pos.x * 5.0 + time * 3.5);
+    float turbulence = (turb1 + turb2 + turb3) * 0.333;
+    
+    // Lightning bolt generation
+    float lightningX = sin(pos.y * 20.0 + time * 15.0 + turbulence * 2.0);
+    float lightningY = sin(pos.x * 25.0 + time * 12.0 + turbulence * 3.0);
+    float lightningZ = sin(pos.z * 18.0 + time * 18.0 + turbulence * 2.5);
+    
+    // Create jagged lightning patterns
+    float lightning = abs(lightningX) * abs(lightningY) * abs(lightningZ);
+    lightning = pow(lightning, 3.0); // Make lightning more sparse and intense
+    
+    // Lightning flash timing
+    float flashTiming = sin(time * 8.0) * sin(time * 3.0);
+    float flash = step(0.7, flashTiming) * step(0.85, lightning);
+    
+    // Storm clouds (dark, rolling masses)
+    float cloud1 = sin(pos.x * 2.0 + time * 1.0) * cos(pos.z * 1.5 + time * 0.8);
+    float cloud2 = sin(pos.y * 3.0 + time * 1.5) * cos(pos.x * 2.5 + time * 1.2);
+    float clouds = (cloud1 + cloud2) * 0.5;
+    clouds = clouds * 0.5 + 0.5; // Normalize to 0-1
+    
+    // Rain effect
+    float rain = sin(pos.x * 50.0 + time * 20.0) * sin(pos.z * 45.0 + time * 18.0);
+    rain = smoothstep(0.8, 1.0, abs(rain));
+    
+    // Electric charge in the air
+    float charge1 = sin(pos.x * 15.0 + time * 10.0) * cos(pos.y * 12.0 + time * 8.0);
+    float charge2 = sin(pos.z * 18.0 + time * 12.0) * cos(pos.x * 14.0 + time * 9.0);
+    float electricCharge = (charge1 + charge2) * 0.5;
+    electricCharge = abs(electricCharge);
+    
+    // Color palette for storm
+    vec3 stormGray = vec3(0.2, 0.2, 0.25);        // Dark storm clouds
+    vec3 lightGray = vec3(0.4, 0.4, 0.5);         // Lighter clouds
+    vec3 lightningBlue = vec3(0.7, 0.8, 1.0);     // Electric blue
+    vec3 lightningWhite = vec3(1.0, 1.0, 1.0);    // Bright flash
+    vec3 chargeColor = vec3(0.3, 0.4, 0.8);       // Electric charge
+    
+    // Base storm color
+    vec3 stormColor = mix(stormGray, lightGray, clouds);
+    
+    // Add electric charge glow
+    stormColor += chargeColor * electricCharge * 0.3;
+    
+    // Add rain streaks
+    stormColor = mix(stormColor, vec3(0.3, 0.3, 0.4), rain * 0.4);
+    
+    // Lightning bolts
+    vec3 boltColor = mix(lightningBlue, lightningWhite, flash);
+    stormColor += boltColor * lightning * 2.0;
+    
+    // Dramatic lightning flash
+    stormColor += lightningWhite * flash * 3.0;
+    
+    // Atmospheric pressure effect
+    float pressure = sin(time * 1.5 + turbulence) * 0.1 + 0.9;
+    stormColor *= pressure;
+    
+    // Dynamic transparency for storm intensity
+    float alpha = 0.6 + clouds * 0.3 + flash * 0.4 + rain * 0.2;
+    alpha = clamp(alpha, 0.3, 1.0);
+    
+    gl_FragColor = vec4(stormColor, alpha);
+}

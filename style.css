@@ -36,22 +36,13 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.1);
     z-index: 999;
     transition: transform 0.3s ease;
-    max-height: 35vh;
+    max-height: 70vh;
     overflow-y: auto;
-}
-
-.top-panel {
-    top: 0;
-    border-bottom: 2px solid #4CAF50;
 }
 
 .bottom-panel {
     bottom: 0;
     border-top: 2px solid #4CAF50;
-}
-
-.ui-panel.hidden {
-    transform: translateY(-100%);
 }
 
 .bottom-panel.hidden {
@@ -198,6 +189,26 @@ button.off:hover {
     background: #da190b;
 }
 
+select {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 10px;
+    white-space: nowrap;
+}
+
+select:hover {
+    background: #45a049;
+}
+
+select option {
+    background: #333;
+    color: white;
+}
+
 /* Value Display */
 span {
     color: #fff;
@@ -323,7 +334,7 @@ span {
     }
     
     .ui-panel {
-        max-height: 50vh;
+        max-height: 80vh;
     }
     
     .control-group {

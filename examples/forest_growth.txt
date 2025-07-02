@@ -1,0 +1,67 @@
+// Forest Growth
+// Organic growth patterns with bark texture and leaf veins
+// Simulates plant cell structure and growth rings
+
+void main() {
+    vec2 uv = vUv;
+    vec3 pos = vPosition;
+    
+    // Create growth ring patterns like tree rings
+    float rings = sin(length(pos.xz) * 15.0 - time * 0.5) * 0.5 + 0.5;
+    rings = pow(rings, 2.0); // Make rings more defined
+    
+    // Organic branching patterns
+    float branch1 = sin(pos.x * 8.0 + pos.y * 4.0) * cos(pos.z * 6.0 + time * 1.0);
+    float branch2 = sin(pos.y * 12.0 + pos.z * 5.0) * cos(pos.x * 7.0 + time * 1.5);
+    float branching = (branch1 + branch2) * 0.5;
+    
+    // Cell-like structures (like plant cells)
+    float cellX = sin(pos.x * 20.0) * cos(pos.y * 18.0);
+    float cellY = sin(pos.y * 22.0) * cos(pos.z * 16.0);
+    float cellZ = sin(pos.z * 24.0) * cos(pos.x * 20.0);
+    float cells = (cellX + cellY + cellZ) * 0.333;
+    
+    // Bark texture pattern
+    float bark1 = sin(pos.y * 25.0 + branching * 2.0) * 0.5 + 0.5;
+    float bark2 = sin(pos.x * 30.0 + pos.z * 20.0) * 0.5 + 0.5;
+    float barkTexture = bark1 * bark2;
+    
+    // Growth animation - plants growing over time
+    float growth = sin(time * 1.5 + length(pos) * 3.0) * 0.5 + 0.5;
+    growth = smoothstep(0.3, 0.8, growth);
+    
+    // Leaf vein patterns
+    float veins = abs(sin(pos.x * 15.0 + branching * 3.0)) * 
+                  abs(cos(pos.y * 12.0 + time * 2.0));
+    veins = smoothstep(0.7, 1.0, veins);
+    
+    // Combine all organic patterns
+    float organicPattern = rings * 0.3 + cells * 0.4 + barkTexture * 0.3;
+    organicPattern *= growth;
+    
+    // Natural color palette
+    vec3 darkBrown = vec3(0.2, 0.1, 0.05);    // Dark bark
+    vec3 lightBrown = vec3(0.4, 0.25, 0.15);  // Light bark
+    vec3 greenHue = vec3(0.2, 0.4, 0.1);      // Forest green
+    vec3 leafGreen = vec3(0.3, 0.6, 0.2);     // Bright leaf green
+    
+    // Mix colors based on patterns
+    vec3 baseColor = mix(darkBrown, lightBrown, organicPattern);
+    baseColor = mix(baseColor, greenHue, branching * 0.3 + 0.2);
+    baseColor = mix(baseColor, leafGreen, veins * 0.6);
+    
+    // Add growth glow effect
+    vec3 growthGlow = vec3(0.4, 0.8, 0.3) * growth * 0.5;
+    baseColor += growthGlow;
+    
+    // Seasonal color variation
+    float seasonalShift = sin(time * 0.8) * 0.5 + 0.5;
+    vec3 autumnColors = vec3(0.8, 0.4, 0.1); // Orange/red autumn
+    baseColor = mix(baseColor, autumnColors, seasonalShift * 0.2);
+    
+    // Natural transparency with organic edges
+    float alpha = 0.8 + organicPattern * 0.2 - veins * 0.1;
+    alpha *= growth;
+    
+    gl_FragColor = vec4(baseColor, alpha);
+}

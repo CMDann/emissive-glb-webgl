@@ -1,0 +1,104 @@
+// Geometric Tessellation
+// Complex geometric patterns with mathematical precision
+// Creates interlocking shapes and symmetrical designs
+
+void main() {
+    vec2 uv = vUv;
+    vec3 pos = vPosition;
+    
+    // Create hexagonal tessellation
+    vec2 hexCoord = pos.xy * 8.0;
+    
+    // Convert to hexagonal coordinates
+    vec2 hexGrid = vec2(hexCoord.x * 0.866025, hexCoord.y + hexCoord.x * 0.5);
+    vec2 hexId = floor(hexGrid);
+    vec2 hexLocal = fract(hexGrid) - 0.5;
+    
+    // Distance to hex center
+    float hexDist = length(hexLocal);
+    
+    // Create triangular tessellation
+    vec2 triCoord = pos.xy * 12.0;
+    vec2 triGrid = vec2(triCoord.x, triCoord.y * 1.732051);
+    vec2 triId = floor(triGrid);
+    vec2 triLocal = fract(triGrid);
+    
+    // Triangle pattern
+    float triPattern = step(triLocal.x + triLocal.y, 1.0);
+    
+    // Square tessellation with rotation
+    float angle = time * 0.5 + length(pos.xy);
+    vec2 rotated = vec2(cos(angle) * pos.x - sin(angle) * pos.y,
+                        sin(angle) * pos.x + cos(angle) * pos.y);
+    vec2 squareCoord = rotated * 6.0;
+    vec2 squareLocal = fract(squareCoord) - 0.5;
+    float squareDist = max(abs(squareLocal.x), abs(squareLocal.y));
+    
+    // Combine tessellations
+    float hexPattern = smoothstep(0.3, 0.35, hexDist);
+    float squarePattern = smoothstep(0.2, 0.25, squareDist);
+    
+    // Create interference patterns
+    float interference1 = sin(hexId.x + hexId.y + time * 2.0);
+    float interference2 = cos(triId.x - triId.y + time * 1.5);
+    
+    // Moiré effect
+    float moire = sin(pos.x * 20.0 + time) * cos(pos.y * 20.0 + time * 1.2);
+    
+    // Sacred geometry - golden ratio spiral
+    float phi = 1.618033988749;
+    float spiral = atan(pos.y, pos.x) + log(length(pos.xy)) * phi;
+    spiral = sin(spiral * 5.0 + time * 2.0);
+    
+    // Voronoi-like pattern
+    vec2 voronoiPoint = pos.xy * 4.0;
+    vec2 voronoiId = floor(voronoiPoint);
+    vec2 voronoiLocal = fract(voronoiPoint);
+    
+    float voronoiDist = 1.0;
+    for(float x = -1.0; x <= 1.0; x++) {
+        for(float y = -1.0; y <= 1.0; y++) {
+            vec2 neighbor = vec2(x, y);
+            vec2 point = neighbor + sin(voronoiId + neighbor + time) * 0.5 + 0.5;
+            float dist = length(voronoiLocal - point);
+            voronoiDist = min(voronoiDist, dist);
+        }
+    }
+    
+    // Combine all patterns
+    float pattern = hexPattern * 0.3 + 
+                   squarePattern * 0.3 + 
+                   triPattern * 0.2 + 
+                   abs(spiral) * 0.2;
+    
+    // Add interference and moiré
+    pattern += (interference1 + interference2) * 0.1;
+    pattern += moire * 0.05;
+    
+    // Voronoi edges
+    float voronoiEdges = smoothstep(0.02, 0.05, voronoiDist);
+    pattern = mix(pattern, 1.0, 1.0 - voronoiEdges);
+    
+    // Mathematical color mapping
+    vec3 color1 = vec3(0.8, 0.2, 0.4);  // Magenta
+    vec3 color2 = vec3(0.2, 0.8, 0.6);  // Cyan
+    vec3 color3 = vec3(0.9, 0.7, 0.1);  // Golden
+    
+    // Color based on pattern intensity
+    vec3 geometricColor = mix(color1, color2, pattern);
+    geometricColor = mix(geometricColor, color3, abs(spiral) * 0.5);
+    
+    // Add edge highlighting
+    float edges = 1.0 - voronoiEdges;
+    geometricColor += vec3(1.0, 1.0, 1.0) * edges * 0.3;
+    
+    // Pulsing mathematical rhythm
+    float mathPulse = sin(time * 3.0 + pattern * 6.28) * 0.2 + 0.8;
+    geometricColor *= mathPulse;
+    
+    // Transparency based on pattern complexity
+    float alpha = 0.6 + pattern * 0.4;
+    alpha *= (1.0 + edges * 0.5);
+    
+    gl_FragColor = vec4(geometricColor, alpha);
+}

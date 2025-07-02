@@ -1,0 +1,107 @@
+// Mathematical Spirals
+// Various mathematical spiral patterns - Fibonacci, Archimedean, Logarithmic
+// Demonstrates mathematical beauty in nature's patterns
+
+void main() {
+    vec2 uv = vUv;
+    vec3 pos = vPosition;
+    
+    // Convert to polar coordinates
+    float radius = length(pos.xy);
+    float angle = atan(pos.y, pos.x);
+    
+    // Golden ratio for Fibonacci spiral
+    float phi = 1.618033988749;
+    
+    // Archimedean spiral: r = a * theta
+    float archimedean = angle * 0.5 + time * 0.5;
+    float archPattern = sin(radius * 10.0 - archimedean * 8.0);
+    
+    // Logarithmic (golden) spiral: r = a * e^(b*theta)
+    float logarithmic = log(radius + 0.1) - angle * 0.2 - time * 0.3;
+    float logPattern = sin(logarithmic * 15.0);
+    
+    // Fibonacci spiral approximation
+    float fibAngle = angle * phi + time * 0.4;
+    float fibRadius = radius * phi;
+    float fibPattern = sin(fibRadius * 8.0 - fibAngle * 6.0);
+    
+    // Hyperbolic spiral: r * theta = constant
+    float hyperbolic = radius * angle - time * 2.0;
+    float hypPattern = sin(hyperbolic * 3.0);
+    
+    // Fermat's spiral: r^2 = a^2 * theta
+    float fermat = radius * radius - angle * 2.0 - time;
+    float fermatPattern = sin(fermat * 10.0);
+    
+    // Multiple spiral interference
+    float spiral1 = sin(radius * 12.0 - angle * 5.0 + time * 2.0);
+    float spiral2 = sin(radius * 8.0 + angle * 3.0 - time * 1.5);
+    float spiral3 = sin(radius * 15.0 - angle * 7.0 + time * 2.5);
+    
+    // Combine spiral patterns
+    float spiralSum = (archPattern + logPattern + fibPattern + 
+                      hypPattern + fermatPattern) * 0.2;
+    float interferenceSum = (spiral1 + spiral2 + spiral3) * 0.333;
+    
+    // Double spiral (like DNA helix projected to 2D)
+    float helix1 = sin(radius * 10.0 - angle * 4.0 + time * 2.0);
+    float helix2 = sin(radius * 10.0 - angle * 4.0 + time * 2.0 + 3.14159);
+    float doubleHelix = max(helix1, helix2);
+    
+    // Rose curve: r = cos(k*theta)
+    float k = 5.0; // Number of petals
+    float rose = cos(k * angle + time) * 0.5 + 0.5;
+    float rosePattern = smoothstep(0.4, 0.6, rose);
+    
+    // Lissajous-like patterns
+    float lissajousX = sin(angle * 3.0 + time * 1.5);
+    float lissajousY = cos(angle * 2.0 + time * 1.2);
+    float lissajous = sin((lissajousX + lissajousY) * 5.0);
+    
+    // Combine all mathematical patterns
+    float totalPattern = spiralSum * 0.4 + 
+                        interferenceSum * 0.3 + 
+                        doubleHelix * 0.15 + 
+                        rosePattern * 0.1 + 
+                        lissajous * 0.05;
+    
+    // Add 3D depth influence
+    float depth = (pos.z + 2.0) * 0.25;
+    totalPattern += depth * 0.2;
+    
+    // Mathematical color palette
+    vec3 goldenColor = vec3(1.0, 0.8, 0.2);       // Golden ratio
+    vec3 blueSpiral = vec3(0.2, 0.6, 1.0);        // Cool mathematics
+    vec3 redSpiral = vec3(1.0, 0.3, 0.4);         // Warm mathematics
+    vec3 greenNature = vec3(0.3, 0.8, 0.4);       // Natural patterns
+    
+    // Color based on different spiral types
+    vec3 mathematicalColor = goldenColor;
+    mathematicalColor = mix(mathematicalColor, blueSpiral, abs(logPattern) * 0.5);
+    mathematicalColor = mix(mathematicalColor, redSpiral, abs(fibPattern) * 0.5);
+    mathematicalColor = mix(mathematicalColor, greenNature, rosePattern * 0.5);
+    
+    // Add spiral arm highlighting
+    float armHighlight = smoothstep(0.7, 1.0, abs(totalPattern));
+    mathematicalColor += vec3(0.8, 0.8, 1.0) * armHighlight * 0.4;
+    
+    // Golden ratio rhythm
+    float goldenPulse = sin(time * phi + radius * phi) * 0.2 + 0.8;
+    mathematicalColor *= goldenPulse;
+    
+    // Center glow (like galactic center)
+    float centerGlow = exp(-radius * 2.0);
+    mathematicalColor += goldenColor * centerGlow * 0.5;
+    
+    // Mathematical precision enhancement
+    float precision = 1.0 - smoothstep(0.0, 0.1, abs(totalPattern));
+    mathematicalColor += vec3(1.0, 1.0, 1.0) * precision * 0.3;
+    
+    // Transparency with mathematical elegance
+    float alpha = 0.6 + abs(totalPattern) * 0.4;
+    alpha += centerGlow * 0.3;
+    alpha += armHighlight * 0.2;
+    
+    gl_FragColor = vec4(mathematicalColor, alpha);
+}

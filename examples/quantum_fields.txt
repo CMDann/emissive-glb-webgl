@@ -1,0 +1,119 @@
+// Quantum Fields
+// Visualization of quantum field fluctuations and particle interactions
+// Represents uncertainty principle and wave-particle duality
+
+void main() {
+    vec2 uv = vUv;
+    vec3 pos = vPosition;
+    
+    // Quantum field fluctuations at Planck scale
+    float planckNoise1 = sin(pos.x * 100.0 + time * 50.0) * 
+                         cos(pos.y * 120.0 + time * 60.0);
+    float planckNoise2 = sin(pos.y * 110.0 + time * 55.0) * 
+                         cos(pos.z * 130.0 + time * 65.0);
+    float planckNoise3 = sin(pos.z * 140.0 + time * 70.0) * 
+                         cos(pos.x * 90.0 + time * 45.0);
+    
+    // Vacuum energy fluctuations
+    float vacuumEnergy = (planckNoise1 + planckNoise2 + planckNoise3) * 0.333;
+    vacuumEnergy *= sin(time * 20.0) * 0.1 + 0.9;
+    
+    // Uncertainty principle visualization
+    float position = pos.x;
+    float momentum = sin(pos.x * 15.0 + time * 8.0);
+    float uncertainty = 1.0 / (abs(position * momentum) + 0.1);
+    uncertainty = clamp(uncertainty, 0.0, 2.0);
+    
+    // Wave function collapse events
+    float waveFunction = sin(pos.x * 8.0 + time * 4.0) * 
+                        cos(pos.y * 6.0 + time * 3.0) * 
+                        sin(pos.z * 7.0 + time * 5.0);
+    float collapseEvent = step(0.8, abs(waveFunction));
+    
+    // Particle-antiparticle pairs
+    float pairCreation = sin(length(pos.xy) * 12.0 - time * 10.0);
+    pairCreation = smoothstep(0.7, 1.0, abs(pairCreation));
+    
+    // Quantum tunneling effect
+    float barrier = smoothstep(-0.5, 0.5, pos.x);
+    float tunneling = exp(-abs(pos.x) * 3.0) * sin(time * 15.0 + pos.y * 10.0);
+    tunneling *= (1.0 - barrier) * 0.5 + 0.5;
+    
+    // Entanglement correlations
+    float particle1 = sin(pos.x * 5.0 + time * 2.0);
+    float particle2 = -sin(pos.y * 5.0 + time * 2.0); // Correlated spin
+    float entanglement = abs(particle1 * particle2);
+    
+    // Virtual particle interactions
+    float virtualParticles = sin(pos.x * 25.0 + time * 12.0) * 
+                            cos(pos.y * 30.0 + time * 15.0) * 
+                            sin(pos.z * 20.0 + time * 18.0);
+    virtualParticles = smoothstep(0.85, 1.0, abs(virtualParticles));
+    
+    // Quantum interference patterns
+    float interference1 = sin(length(pos.xy - vec2(1.0, 0.0)) * 20.0 - time * 8.0);
+    float interference2 = sin(length(pos.xy - vec2(-1.0, 0.0)) * 20.0 - time * 8.0);
+    float quantumInterference = interference1 + interference2;
+    quantumInterference = abs(quantumInterference);
+    
+    // Decoherence zones
+    float decoherence = length(pos) * 0.5;
+    decoherence = 1.0 - exp(-decoherence * decoherence);
+    
+    // Combine quantum phenomena
+    float quantumField = vacuumEnergy * 0.3 + 
+                        uncertainty * 0.2 + 
+                        tunneling * 0.2 + 
+                        entanglement * 0.15 + 
+                        quantumInterference * 0.15;
+    
+    // Add discrete quantum events
+    quantumField += collapseEvent * 0.5;
+    quantumField += pairCreation * 0.3;
+    quantumField += virtualParticles * 0.4;
+    
+    // Quantum color palette
+    vec3 vacuumBlue = vec3(0.1, 0.2, 0.8);        // Vacuum state
+    vec3 energyPurple = vec3(0.6, 0.2, 0.9);      // High energy
+    vec3 particleGold = vec3(1.0, 0.8, 0.2);      // Particle events
+    vec3 fieldGreen = vec3(0.2, 0.8, 0.4);        // Field fluctuations
+    vec3 quantumWhite = vec3(1.0, 1.0, 1.0);      // Quantum events
+    
+    // Base quantum field color
+    vec3 quantumColor = vacuumBlue;
+    quantumColor = mix(quantumColor, energyPurple, abs(vacuumEnergy) * 0.7);
+    quantumColor = mix(quantumColor, fieldGreen, quantumInterference * 0.5);
+    quantumColor = mix(quantumColor, particleGold, entanglement * 0.6);
+    
+    // Add quantum event highlights
+    quantumColor += quantumWhite * collapseEvent * 0.8;
+    quantumColor += particleGold * pairCreation * 0.6;
+    quantumColor += energyPurple * virtualParticles * 0.7;
+    
+    // Uncertainty principle color shifts
+    vec3 uncertaintyColor = vec3(
+        sin(uncertainty * 6.28 + time * 3.0),
+        sin(uncertainty * 6.28 + time * 3.0 + 2.094),
+        sin(uncertainty * 6.28 + time * 3.0 + 4.188)
+    ) * 0.5 + 0.5;
+    quantumColor = mix(quantumColor, uncertaintyColor, uncertainty * 0.3);
+    
+    // Quantum tunneling glow
+    quantumColor += vec3(0.5, 0.8, 1.0) * tunneling * 0.4;
+    
+    // Decoherence dimming
+    quantumColor *= (1.0 - decoherence * 0.5);
+    
+    // Quantum fluctuation timing
+    float quantumPulse = sin(time * 30.0 + quantumField * 10.0) * 0.1 + 0.9;
+    quantumColor *= quantumPulse;
+    
+    // Transparency with quantum probability
+    float alpha = 0.5 + abs(quantumField) * 0.4;
+    alpha += collapseEvent * 0.3;
+    alpha += virtualParticles * 0.2;
+    alpha *= (1.0 - decoherence * 0.3);
+    alpha = clamp(alpha, 0.2, 1.0);
+    
+    gl_FragColor = vec4(quantumColor, alpha);
+}

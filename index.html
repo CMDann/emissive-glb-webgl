@@ -13,8 +13,8 @@
     <!-- UI Toggle Button -->
     <button id="uiToggle" class="ui-toggle">Hide UI</button>
     
-    <!-- Top UI Panel -->
-    <div id="topPanel" class="ui-panel top-panel">
+    <!-- Bottom UI Panel -->
+    <div id="bottomPanel" class="ui-panel bottom-panel">
         <div class="panel-content">
             <h3>3D Scene Controls</h3>
             
@@ -141,12 +141,7 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-    
-    <!-- Bottom UI Panel -->
-    <div id="bottomPanel" class="ui-panel bottom-panel">
-        <div class="panel-content">
+            
             <div class="collapsible-section">
                 <h4 class="section-header" data-section="scene">
                     <span class="collapse-icon">▼</span> Scene Controls
@@ -183,7 +178,32 @@
                         <div class="shader-controls">
                             <button id="applyShader">Apply Shader</button>
                             <button id="resetShader">Reset to Original</button>
-                            <button id="loadExampleShader">Load Example</button>
+                            <select id="exampleSelector">
+                                <option value="">Load Example...</option>
+                                <optgroup label="Original Examples">
+                                    <option value="holographic_interference">Holographic Interference</option>
+                                    <option value="plasma_energy">Plasma Energy Field</option>
+                                    <option value="crystalline_lattice">Crystalline Lattice</option>
+                                </optgroup>
+                                <optgroup label="Nature Inspired">
+                                    <option value="ocean_waves">Ocean Waves</option>
+                                    <option value="fire_flames">Fire and Flames</option>
+                                    <option value="forest_growth">Forest Growth</option>
+                                    <option value="storm_lightning">Storm Lightning</option>
+                                </optgroup>
+                                <optgroup label="Mathematical">
+                                    <option value="fractal_mandelbrot">Fractal Mandelbrot</option>
+                                    <option value="geometric_tessellation">Geometric Tessellation</option>
+                                    <option value="wave_interference">Wave Interference</option>
+                                    <option value="mathematical_spirals">Mathematical Spirals</option>
+                                </optgroup>
+                                <optgroup label="Sci-Fi / Futuristic">
+                                    <option value="digital_matrix">Digital Matrix</option>
+                                    <option value="space_nebula">Space Nebula</option>
+                                    <option value="quantum_fields">Quantum Fields</option>
+                                    <option value="cyber_grid">Cyber Grid</option>
+                                </optgroup>
+                            </select>
                         </div>
                         <textarea 
                             id="shaderCode" 

@@ -1,0 +1,66 @@
+// Fire and Flames
+// Dynamic fire effect with realistic flame movement and heat distortion
+// Creates hot flames with embers and heat shimmer
+
+void main() {
+    vec2 uv = vUv;
+    vec3 pos = vPosition;
+    
+    // Generate turbulent noise for flame movement
+    float noise1 = sin(pos.x * 6.0 + time * 4.0) * cos(pos.y * 4.0 + time * 3.0);
+    float noise2 = sin(pos.y * 8.0 + time * 5.0) * cos(pos.z * 5.0 + time * 4.0);
+    float noise3 = sin(pos.z * 10.0 + time * 6.0) * cos(pos.x * 7.0 + time * 5.0);
+    
+    // Combine noise layers for complex turbulence
+    float turbulence = (noise1 + noise2 + noise3) * 0.333;
+    
+    // Create flame height gradient (flames rise upward)
+    float flameHeight = (pos.y + 2.0) * 0.5; // Normalize height
+    flameHeight = clamp(flameHeight, 0.0, 1.0);
+    
+    // Flame intensity based on height and turbulence
+    float flameIntensity = (1.0 - flameHeight) * (0.7 + turbulence * 0.3);
+    flameIntensity = max(0.0, flameIntensity);
+    
+    // Create flame core (hottest part)
+    float core = smoothstep(0.6, 1.0, flameIntensity);
+    
+    // Flame edges (cooler outer flame)
+    float edges = smoothstep(0.2, 0.8, flameIntensity) - core;
+    
+    // Heat distortion effect
+    float distortion = sin(pos.x * 15.0 + time * 8.0) * sin(pos.y * 12.0 + time * 6.0);
+    distortion *= flameIntensity * 0.1;
+    
+    // Ember particles
+    float emberNoise = sin(pos.x * 20.0 + time * 10.0) * cos(pos.z * 18.0 + time * 8.0);
+    float embers = step(0.85, emberNoise) * flameIntensity;
+    
+    // Color gradient from hot core to cooler edges
+    vec3 coreColor = vec3(1.0, 1.0, 0.8);      // White-hot center
+    vec3 hotColor = vec3(1.0, 0.6, 0.1);       // Orange-yellow
+    vec3 coolColor = vec3(1.0, 0.2, 0.0);      // Red edges
+    vec3 emberColor = vec3(1.0, 0.4, 0.0);     // Bright orange embers
+    
+    // Mix colors based on flame zones
+    vec3 flameColor = coolColor;
+    flameColor = mix(flameColor, hotColor, smoothstep(0.0, 0.7, flameIntensity));
+    flameColor = mix(flameColor, coreColor, core);
+    
+    // Add ember sparkles
+    flameColor += emberColor * embers * 2.0;
+    
+    // Pulsing intensity for living fire effect
+    float pulse = sin(time * 3.0) * 0.1 + 0.9;
+    flameColor *= pulse;
+    
+    // Add heat distortion to color
+    flameColor.r += distortion;
+    flameColor.g += distortion * 0.5;
+    
+    // Transparency based on flame intensity
+    float alpha = flameIntensity * 0.9 + embers;
+    alpha = clamp(alpha, 0.0, 1.0);
+    
+    gl_FragColor = vec4(flameColor, alpha);
+}

@@ -1,0 +1,52 @@
+// Ocean Waves
+// Realistic ocean surface with foam and depth variation
+// Creates rolling waves with underwater caustics
+
+void main() {
+    vec2 uv = vUv;
+    vec3 pos = vPosition;
+    
+    // Create multiple wave layers
+    float wave1 = sin(pos.x * 2.0 + time * 1.5) * cos(pos.z * 1.5 + time * 1.2);
+    float wave2 = sin(pos.x * 3.5 + time * 2.0) * cos(pos.z * 2.8 + time * 1.8);
+    float wave3 = sin(pos.x * 5.0 + time * 2.5) * cos(pos.z * 4.2 + time * 2.2);
+    
+    // Combine waves with different amplitudes
+    float waves = wave1 * 0.5 + wave2 * 0.3 + wave3 * 0.2;
+    
+    // Create foam effect on wave crests
+    float foam = smoothstep(0.4, 0.8, waves);
+    foam *= sin(time * 8.0 + pos.x * 10.0) * 0.5 + 0.5;
+    
+    // Underwater caustics pattern
+    float caustics1 = sin(pos.x * 8.0 + time * 3.0) * cos(pos.z * 6.0 + time * 2.5);
+    float caustics2 = sin(pos.x * 12.0 + time * 4.0) * cos(pos.z * 10.0 + time * 3.5);
+    float caustics = (caustics1 + caustics2) * 0.5;
+    caustics = max(0.0, caustics);
+    
+    // Ocean depth gradient
+    float depth = length(pos) * 0.2;
+    
+    // Color mixing based on depth and waves
+    vec3 shallowWater = vec3(0.4, 0.8, 0.9);  // Light blue
+    vec3 deepWater = vec3(0.1, 0.3, 0.6);     // Deep blue
+    vec3 foamColor = vec3(0.9, 0.95, 1.0);    // White foam
+    
+    // Interpolate colors based on depth
+    vec3 waterColor = mix(shallowWater, deepWater, depth);
+    
+    // Add caustics as bright spots
+    waterColor += vec3(0.3, 0.5, 0.4) * caustics * 0.8;
+    
+    // Mix in foam
+    waterColor = mix(waterColor, foamColor, foam * 0.7);
+    
+    // Add wave shimmer
+    float shimmer = sin(waves * 6.28 + time * 5.0) * 0.1 + 0.9;
+    waterColor *= shimmer;
+    
+    // Dynamic transparency for wave effect
+    float alpha = 0.7 + waves * 0.2 + foam * 0.3;
+    
+    gl_FragColor = vec4(waterColor, alpha);
+}

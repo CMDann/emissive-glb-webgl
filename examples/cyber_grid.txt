@@ -1,0 +1,140 @@
+// Cyber Grid
+// Futuristic network topology with data flow and cyber infrastructure
+// Represents digital connectivity and information superhighway
+
+void main() {
+    vec2 uv = vUv;
+    vec3 pos = vPosition;
+    
+    // Primary grid structure
+    vec2 gridSize = vec2(8.0, 8.0);
+    vec2 gridPos = pos.xy * gridSize;
+    vec2 gridId = floor(gridPos);
+    vec2 gridLocal = fract(gridPos) - 0.5;
+    
+    // Grid lines
+    float gridLineX = abs(gridLocal.x);
+    float gridLineY = abs(gridLocal.y);
+    float gridLines = min(smoothstep(0.45, 0.5, gridLineX), 
+                         smoothstep(0.45, 0.5, gridLineY));
+    gridLines = 1.0 - gridLines;
+    
+    // Node points at grid intersections
+    float nodeDistance = length(gridLocal);
+    float nodes = 1.0 - smoothstep(0.1, 0.2, nodeDistance);
+    
+    // Data packet movement along grid
+    float packetSpeed = 5.0;
+    float packetX = fract(gridId.x * 0.3 + time * packetSpeed);
+    float packetY = fract(gridId.y * 0.7 + time * packetSpeed * 0.8);
+    
+    // Data packets on horizontal lines
+    float dataPacketH = smoothstep(0.1, 0.3, packetX) * 
+                       smoothstep(0.7, 0.9, packetX) * 
+                       smoothstep(0.4, 0.5, abs(gridLocal.y));
+    
+    // Data packets on vertical lines
+    float dataPacketV = smoothstep(0.1, 0.3, packetY) * 
+                       smoothstep(0.7, 0.9, packetY) * 
+                       smoothstep(0.4, 0.5, abs(gridLocal.x));
+    
+    float dataPackets = max(dataPacketH, dataPacketV);
+    
+    // Network traffic intensity
+    float traffic = sin(gridId.x * 0.5 + time * 2.0) * 
+                   cos(gridId.y * 0.7 + time * 1.5);
+    traffic = abs(traffic);
+    
+    // Cyber security scanning
+    float scanLine = sin(pos.y * 20.0 - time * 15.0);
+    scanLine = smoothstep(0.98, 1.0, abs(scanLine));
+    
+    // Network hubs (larger connection points)
+    float hubPattern = sin(gridId.x * 0.8) * cos(gridId.y * 1.2);
+    float networkHubs = smoothstep(0.5, 0.7, abs(hubPattern));
+    float hubGlow = networkHubs * (sin(time * 4.0 + gridId.x + gridId.y) * 0.3 + 0.7);
+    
+    // Data streams (diagonal flows)
+    float streamAngle = atan(pos.y, pos.x);
+    float streamDistance = length(pos.xy);
+    float dataStream = sin(streamDistance * 10.0 - time * 8.0 + streamAngle * 2.0);
+    dataStream = smoothstep(0.8, 1.0, abs(dataStream));
+    
+    // Firewall barriers
+    float firewall = step(0.3, abs(sin(pos.x * 3.0 + time * 2.0)));
+    firewall *= smoothstep(0.1, 0.2, abs(pos.y));
+    
+    // Signal interference
+    float interference = sin(pos.x * 25.0 + time * 10.0) * 
+                        sin(pos.y * 30.0 + time * 12.0);
+    interference = step(0.9, abs(interference));
+    
+    // Quantum encryption patterns
+    float encryption = sin(gridId.x * 2.0 + gridId.y * 3.0 + time * 5.0);
+    encryption = smoothstep(0.7, 1.0, abs(encryption));
+    
+    // Network topology connections
+    float connection1 = length(pos.xy - vec2(sin(time * 1.5) * 2.0, cos(time * 1.2) * 2.0));
+    float connection2 = length(pos.xy - vec2(cos(time * 1.8) * 2.0, sin(time * 1.6) * 2.0));
+    float connections = exp(-connection1 * 2.0) + exp(-connection2 * 2.0);
+    
+    // Combine all cyber elements
+    float cyberPattern = gridLines * 0.3 + 
+                        nodes * 0.2 + 
+                        dataPackets * 0.2 + 
+                        hubGlow * 0.15 + 
+                        dataStream * 0.1 + 
+                        connections * 0.05;
+    
+    // Add special effects
+    cyberPattern += scanLine * 0.4;
+    cyberPattern += interference * 0.3;
+    cyberPattern += encryption * 0.2;
+    
+    // Cyber color palette
+    vec3 gridBlue = vec3(0.0, 0.5, 1.0);          // Primary grid
+    vec3 dataGreen = vec3(0.0, 1.0, 0.5);         // Data flow
+    vec3 nodeOrange = vec3(1.0, 0.6, 0.0);        // Network nodes
+    vec3 securityRed = vec3(1.0, 0.2, 0.2);       // Security/alerts
+    vec3 quantumPurple = vec3(0.8, 0.2, 1.0);     // Quantum elements
+    vec3 cyberWhite = vec3(1.0, 1.0, 1.0);        // High activity
+    
+    // Base cyber color
+    vec3 cyberColor = gridBlue * 0.3;
+    cyberColor = mix(cyberColor, dataGreen, dataPackets * 0.8);
+    cyberColor = mix(cyberColor, nodeOrange, nodes * 0.7);
+    cyberColor = mix(cyberColor, securityRed, firewall * 0.6);
+    cyberColor = mix(cyberColor, quantumPurple, encryption * 0.5);
+    
+    // Traffic intensity coloring
+    cyberColor *= (0.7 + traffic * 0.6);
+    
+    // Hub highlighting
+    cyberColor += nodeOrange * hubGlow * 0.8;
+    
+    // Connection highlighting
+    cyberColor += cyberWhite * connections * 0.3;
+    
+    // Scan line effects
+    cyberColor += vec3(0.5, 0.8, 1.0) * scanLine * 0.7;
+    
+    // Interference glitching
+    cyberColor += securityRed * interference * 0.5;
+    
+    // Network pulse rhythm
+    float networkPulse = sin(time * 8.0 + cyberPattern * 5.0) * 0.2 + 0.8;
+    cyberColor *= networkPulse;
+    
+    // Add depth perspective
+    float depth = (pos.z + 2.0) * 0.25;
+    cyberColor *= (1.0 - depth * 0.2);
+    
+    // Transparency for layered network effect
+    float alpha = 0.4 + cyberPattern * 0.5;
+    alpha += dataPackets * 0.3;
+    alpha += scanLine * 0.4;
+    alpha += networkHubs * 0.3;
+    alpha = clamp(alpha, 0.2, 0.95);
+    
+    gl_FragColor = vec4(cyberColor, alpha);
+}
