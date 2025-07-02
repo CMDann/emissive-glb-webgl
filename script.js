@@ -20,6 +20,20 @@ let emissiveMaterials = [];
 let originalObjectMaterials = new Map();
 let customShaderMaterial;
 let shaderUniforms = {};
+let animationMixer;
+let animationClips = [];
+let animationActions = [];
+let animationPlaying = false;
+let animationAutoplay = true;
+let explosionState = false;
+let originalPositions = new Map();
+let originalRotations = new Map();
+let environmentObjects = [];
+let groundPlane;
+let environmentVisible = true;
+let groundVisible = true;
+let currentModelFile = 'test.glb';
+let availableModels = ['test.glb'];
 
 function init() {
     // Scene setup
@@ -58,7 +72,10 @@ function init() {
     // Setup particle system
     setupParticleSystem();
     
-    // Load the GLB model
+    // Discover available models
+    discoverModels();
+    
+    // Load the default GLB model
     loadGLBModel();
     
     // Setup UI controls
@@ -137,6 +154,7 @@ function createEnvironmentObjects() {
         box.position.set(pos.x, pos.y, pos.z);
         box.castShadow = true;
         box.receiveShadow = true;
+        environmentObjects.push(box);
         scene.add(box);
     });
     
@@ -147,16 +165,17 @@ function createEnvironmentObjects() {
     cone.position.set(0, 0, -5);
     cone.castShadow = true;
     cone.receiveShadow = true;
+    environmentObjects.push(cone);
     scene.add(cone);
     
     // Ground plane
     const planeGeometry = new THREE.PlaneGeometry(20, 20);
     const planeMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
-    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-    plane.rotation.x = -Math.PI / 2;
-    plane.position.y = -2;
-    plane.receiveShadow = true;
-    scene.add(plane);
+    groundPlane = new THREE.Mesh(planeGeometry, planeMaterial);
+    groundPlane.rotation.x = -Math.PI / 2;
+    groundPlane.position.y = -2;
+    groundPlane.receiveShadow = true;
+    scene.add(groundPlane);
 }
 
 function setupParticleSystem() {
@@ -539,15 +558,278 @@ function hideShaderError() {
     errorElement.style.display = 'none';
 }
 
-function loadGLBModel() {
+function setupAnimations(gltf) {
+    if (gltf.animations && gltf.animations.length > 0) {
+        animationMixer = new THREE.AnimationMixer(gltf.scene);
+        animationClips = gltf.animations;
+        
+        // Create actions for all animations
+        animationClips.forEach((clip, index) => {
+            const action = animationMixer.clipAction(clip);
+            animationActions.push(action);
+        });
+        
+        // Start animations if autoplay is enabled
+        if (animationAutoplay) {
+            playAnimations();
+        }
+        
+        return true; // Has animations
+    }
+    return false; // No animations
+}
+
+function playAnimations() {
+    if (animationActions.length > 0) {
+        animationActions.forEach(action => {
+            action.play();
+        });
+        animationPlaying = true;
+    }
+}
+
+function pauseAnimations() {
+    if (animationActions.length > 0) {
+        animationActions.forEach(action => {
+            action.paused = true;
+        });
+        animationPlaying = false;
+    }
+}
+
+function stopAnimations() {
+    if (animationActions.length > 0) {
+        animationActions.forEach(action => {
+            action.stop();
+        });
+        animationPlaying = false;
+    }
+}
+
+function toggleAnimations() {
+    if (animationPlaying) {
+        pauseAnimations();
+    } else {
+        playAnimations();
+    }
+}
+
+function storeOriginalTransforms(object) {
+    originalPositions.clear();
+    originalRotations.clear();
+    
+    object.traverse(function(child) {
+        if (child.isMesh) {
+            originalPositions.set(child, child.position.clone());
+            originalRotations.set(child, child.rotation.clone());
+        }
+    });
+}
+
+function explodeModel() {
+    if (!loadedModel) return;
+    
+    const explosionStrength = explosionState ? 0 : 3.0;
+    const rotationStrength = explosionState ? 0 : Math.PI;
+    
+    loadedModel.traverse(function(child) {
+        if (child.isMesh) {
+            const originalPos = originalPositions.get(child);
+            const originalRot = originalRotations.get(child);
+            
+            if (originalPos && originalRot) {
+                if (explosionState) {
+                    // Reassemble - move back to original positions
+                    child.position.copy(originalPos);
+                    child.rotation.copy(originalRot);
+                } else {
+                    // Explode - move outward from center
+                    const direction = originalPos.clone().normalize();
+                    const randomDirection = new THREE.Vector3(
+                        (Math.random() - 0.5) * 2,
+                        (Math.random() - 0.5) * 2,
+                        (Math.random() - 0.5) * 2
+                    );
+                    direction.add(randomDirection.multiplyScalar(0.5));
+                    
+                    child.position.copy(originalPos).add(direction.multiplyScalar(explosionStrength));
+                    child.rotation.set(
+                        originalRot.x + (Math.random() - 0.5) * rotationStrength,
+                        originalRot.y + (Math.random() - 0.5) * rotationStrength,
+                        originalRot.z + (Math.random() - 0.5) * rotationStrength
+                    );
+                }
+            }
+        }
+    });
+    
+    explosionState = !explosionState;
+}
+
+function toggleEnvironmentVisibility() {
+    environmentVisible = !environmentVisible;
+    environmentObjects.forEach(obj => {
+        obj.visible = environmentVisible;
+    });
+}
+
+function toggleGroundVisibility() {
+    groundVisible = !groundVisible;
+    if (groundPlane) {
+        groundPlane.visible = groundVisible;
+    }
+}
+
+async function discoverModels() {
+    console.log('Discovering available models...');
+    
+    try {
+        // Try to load a models.json file that lists available models
+        const response = await fetch('./models/models.json');
+        if (response.ok) {
+            const data = await response.json();
+            availableModels = data.models || ['test.glb'];
+            console.log('Loaded models from models.json:', availableModels);
+        } else {
+            console.log('models.json not found, testing common model names...');
+            
+            // Use a more comprehensive list of common GLB names
+            const commonModels = [
+                'test.glb',
+                'model.glb',
+                'scene.glb',
+                'example.glb',
+                'demo.glb',
+                'character.glb',
+                'building.glb',
+                'vehicle.glb',
+                'robot.glb',
+                'object.glb',
+                'sample.glb',
+                'mesh.glb',
+                'animation.glb',
+                'asset.glb'
+            ];
+            
+            availableModels = [];
+            
+            // Test each potential model with both HEAD and GET fallback
+            for (const modelName of commonModels) {
+                try {
+                    // Try HEAD request first (faster)
+                    let testResponse = await fetch(`./models/${modelName}`, { method: 'HEAD' });
+                    
+                    // If HEAD fails, try a GET request (some servers don't support HEAD)
+                    if (!testResponse.ok) {
+                        testResponse = await fetch(`./models/${modelName}`, { 
+                            method: 'GET',
+                            headers: { 'Range': 'bytes=0-0' } // Request just 1 byte
+                        });
+                    }
+                    
+                    if (testResponse.ok) {
+                        availableModels.push(modelName);
+                        console.log(`Found model: ${modelName}`);
+                    }
+                } catch (e) {
+                    // Model doesn't exist, skip silently
+                }
+            }
+            
+            // Always ensure test.glb is in the list if no models found
+            if (availableModels.length === 0) {
+                availableModels = ['test.glb'];
+                console.log('No models found, using default test.glb');
+            }
+        }
+    } catch (error) {
+        console.log('Could not discover models, using default:', error);
+        availableModels = ['test.glb'];
+    }
+    
+    console.log('Final available models:', availableModels);
+    updateModelSelector();
+}
+
+function updateModelSelector() {
+    const selector = document.getElementById('modelSelector');
+    if (selector) {
+        // Clear existing options
+        selector.innerHTML = '';
+        
+        // Add available models
+        availableModels.forEach(modelName => {
+            const option = document.createElement('option');
+            option.value = modelName;
+            option.textContent = modelName === 'test.glb' ? 'test.glb (default)' : modelName;
+            if (modelName === currentModelFile) {
+                option.selected = true;
+            }
+            selector.appendChild(option);
+        });
+    }
+}
+
+function cleanupCurrentModel() {
+    // Remove current model from scene
+    if (loadedModel) {
+        scene.remove(loadedModel);
+        
+        // Cleanup animations
+        if (animationMixer) {
+            animationMixer.stopAllAction();
+            animationMixer = null;
+        }
+        animationClips = [];
+        animationActions = [];
+        animationPlaying = false;
+        
+        // Reset explosion state
+        explosionState = false;
+        originalPositions.clear();
+        originalRotations.clear();
+        
+        // Reset shader materials
+        if (customShaderMaterial) {
+            customShaderMaterial.dispose();
+            customShaderMaterial = null;
+        }
+        originalObjectMaterials.clear();
+        emissiveMaterials = [];
+        
+        // Reset bounding box
+        if (boundingBoxHelper) {
+            scene.remove(boundingBoxHelper);
+            boundingBoxHelper.geometry.dispose();
+            boundingBoxHelper.material.dispose();
+            boundingBoxHelper = null;
+        }
+        
+        loadedModel = null;
+    }
+}
+
+function loadGLBModel(filename = 'test.glb') {
+    // Cleanup previous model
+    cleanupCurrentModel();
+    
+    // Update current model tracking
+    currentModelFile = filename;
+    
     const loader = new THREE.GLTFLoader();
     
+    // Update status
+    document.getElementById('modelStatus').textContent = `Loading ${filename}...`;
+    
     loader.load(
-        './models/test.glb',
+        `./models/${filename}`,
         function(gltf) {
             console.log('GLB model loaded successfully', gltf);
             loadedModel = gltf.scene;
             loadedModel.position.set(0, 0, 0);
+            
+            // Check for animations
+            const hasAnimations = setupAnimations(gltf);
             
             // Traverse the model to find emissive materials
             loadedModel.traverse(function(child) {
@@ -574,6 +856,9 @@ function loadGLBModel() {
             // Auto-scale model to fit within environment bounds
             autoScaleModel(loadedModel);
             
+            // Store original transforms for explosion effect
+            storeOriginalTransforms(loadedModel);
+            
             // Analyze and update inspector info
             analyzeObject(loadedModel);
             
@@ -581,17 +866,23 @@ function loadGLBModel() {
             storeOriginalMaterials();
             
             scene.add(loadedModel);
-            document.getElementById('modelStatus').textContent = 'test.glb loaded successfully';
+            
+            // Update status with animation info
+            let statusText = `${filename} loaded successfully`;
+            if (hasAnimations) {
+                statusText += ` (${animationClips.length} animation${animationClips.length > 1 ? 's' : ''})`;
+            }
+            document.getElementById('modelStatus').textContent = statusText;
         },
         function(progress) {
             if (progress.total > 0) {
                 const percent = Math.round((progress.loaded / progress.total) * 100);
-                document.getElementById('modelStatus').textContent = `Loading test.glb... ${percent}%`;
+                document.getElementById('modelStatus').textContent = `Loading ${filename}... ${percent}%`;
             }
         },
         function(error) {
             console.error('Error loading GLB model:', error);
-            document.getElementById('modelStatus').textContent = 'test.glb not found - using placeholder';
+            document.getElementById('modelStatus').textContent = `${filename} not found - using placeholder`;
             
             // Create a placeholder emissive cube if model fails to load
             const geometry = new THREE.BoxGeometry(1, 1, 1);
@@ -603,6 +894,9 @@ function loadGLBModel() {
             const placeholder = new THREE.Mesh(geometry, material);
             placeholder.position.set(0, 0, 0);
             loadedModel = placeholder; // Assign for transform controls
+            
+            // Store original transforms for explosion effect
+            storeOriginalTransforms(loadedModel);
             
             // Analyze placeholder
             analyzeObject(loadedModel);
@@ -632,6 +926,13 @@ function setupUIControls() {
     const applyShaderBtn = document.getElementById('applyShader');
     const resetShaderBtn = document.getElementById('resetShader');
     const exampleSelector = document.getElementById('exampleSelector');
+    const animationToggle = document.getElementById('animationToggle');
+    const animationAutoplayToggle = document.getElementById('animationAutoplayToggle');
+    const explodeToggle = document.getElementById('explodeToggle');
+    const environmentToggle = document.getElementById('environmentToggle');
+    const groundToggle = document.getElementById('groundToggle');
+    const modelSelector = document.getElementById('modelSelector');
+    const refreshModelsBtn = document.getElementById('refreshModels');
     const modelScale = document.getElementById('modelScale');
     const scaleValue = document.getElementById('scaleValue');
     const modelRotationX = document.getElementById('modelRotationX');
@@ -724,6 +1025,49 @@ function setupUIControls() {
             // Reset to default option after loading
             this.value = '';
         }
+    });
+    
+    animationToggle.addEventListener('click', function() {
+        if (animationActions.length > 0) {
+            toggleAnimations();
+            this.textContent = `Animation: ${animationPlaying ? 'PLAYING' : 'PAUSED'}`;
+            this.className = animationPlaying ? '' : 'off';
+        }
+    });
+    
+    animationAutoplayToggle.addEventListener('click', function() {
+        animationAutoplay = !animationAutoplay;
+        this.textContent = `Autoplay: ${animationAutoplay ? 'ON' : 'OFF'}`;
+        this.className = animationAutoplay ? '' : 'off';
+    });
+    
+    explodeToggle.addEventListener('click', function() {
+        explodeModel();
+        this.textContent = explosionState ? 'Reassemble Model' : 'Explode Model';
+        this.className = explosionState ? 'off' : '';
+    });
+    
+    environmentToggle.addEventListener('click', function() {
+        toggleEnvironmentVisibility();
+        this.textContent = `Environment: ${environmentVisible ? 'ON' : 'OFF'}`;
+        this.className = environmentVisible ? '' : 'off';
+    });
+    
+    groundToggle.addEventListener('click', function() {
+        toggleGroundVisibility();
+        this.textContent = `Ground: ${groundVisible ? 'ON' : 'OFF'}`;
+        this.className = groundVisible ? '' : 'off';
+    });
+    
+    modelSelector.addEventListener('change', function() {
+        const selectedModel = this.value;
+        if (selectedModel && selectedModel !== currentModelFile) {
+            loadGLBModel(selectedModel);
+        }
+    });
+    
+    refreshModelsBtn.addEventListener('click', function() {
+        discoverModels();
     });
     
     modelScale.addEventListener('input', function() {
@@ -956,6 +1300,12 @@ function animate() {
     controls.update();
     updateParticles();
     updateShaderUniforms();
+    
+    // Update animations
+    if (animationMixer) {
+        animationMixer.update(0.016); // ~60fps
+    }
+    
     renderer.render(scene, camera);
 }
 
