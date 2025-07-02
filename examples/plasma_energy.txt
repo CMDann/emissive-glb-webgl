@@ -1,0 +1,57 @@
+// Animated Plasma Energy Field
+// Creates a turbulent energy field with electric-like discharges
+// Perfect for sci-fi energy effects and power sources
+
+void main() {
+    vec2 uv = vUv;
+    vec3 pos = vPosition;
+    
+    // Generate multiple layers of noise for turbulence
+    float turbulence1 = sin(pos.x * 8.0 + time * 2.0) * cos(pos.y * 6.0 + time * 1.5);
+    float turbulence2 = sin(pos.y * 12.0 + time * 3.0) * cos(pos.z * 10.0 + time * 2.5);
+    float turbulence3 = sin(pos.z * 15.0 + time * 1.8) * cos(pos.x * 7.0 + time * 4.0);
+    
+    // Combine turbulence layers
+    float energy = (turbulence1 + turbulence2 + turbulence3) * 0.333;
+    
+    // Add electric discharge patterns
+    float discharge1 = sin((pos.x + pos.y) * 20.0 + time * 8.0);
+    float discharge2 = sin((pos.y + pos.z) * 25.0 + time * 6.0);
+    float discharge3 = sin((pos.z + pos.x) * 18.0 + time * 10.0);
+    
+    float electricField = (discharge1 + discharge2 + discharge3) * 0.2;
+    
+    // Create plasma core with high frequency oscillation
+    float plasmaCore = sin(length(pos) * 30.0 - time * 15.0);
+    plasmaCore = pow(abs(plasmaCore), 0.3) * sign(plasmaCore);
+    
+    // Combine all energy components
+    float totalEnergy = energy + electricField + plasmaCore * 0.5;
+    
+    // Create dynamic color based on energy intensity
+    vec3 lowEnergyColor = vec3(0.1, 0.0, 0.3);   // Deep purple
+    vec3 midEnergyColor = vec3(0.8, 0.2, 0.9);   // Bright magenta
+    vec3 highEnergyColor = vec3(0.9, 0.9, 1.0);  // Electric white
+    
+    // Interpolate colors based on energy level
+    vec3 color;
+    if (totalEnergy < 0.0) {
+        color = mix(lowEnergyColor, midEnergyColor, (totalEnergy + 1.0));
+    } else {
+        color = mix(midEnergyColor, highEnergyColor, totalEnergy);
+    }
+    
+    // Add pulsing intensity based on time
+    float pulse = sin(time * 4.0) * 0.3 + 0.7;
+    color *= pulse;
+    
+    // Add electric crackling effect
+    float crackle = step(0.85, abs(totalEnergy));
+    color += vec3(crackle * 2.0);
+    
+    // Dynamic transparency for energy flow effect
+    float alpha = 0.7 + abs(totalEnergy) * 0.3;
+    alpha *= (1.0 + sin(time * 6.0) * 0.2);
+    
+    gl_FragColor = vec4(color, alpha);
+}

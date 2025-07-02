@@ -17,6 +17,9 @@ let boundingBoxHelper;
 let boundingBoxVisible = false;
 let objectWireframeEnabled = false;
 let emissiveMaterials = [];
+let originalObjectMaterials = new Map();
+let customShaderMaterial;
+let shaderUniforms = {};
 
 function init() {
     // Scene setup
@@ -397,6 +400,137 @@ function updateObjectOpacity(value) {
     }
 }
 
+function storeOriginalMaterials() {
+    if (!loadedModel) return;
+    
+    originalObjectMaterials.clear();
+    loadedModel.traverse(function(child) {
+        if (child.isMesh && child.material) {
+            originalObjectMaterials.set(child, child.material.clone());
+        }
+    });
+}
+
+function applyCustomShader() {
+    const shaderCode = document.getElementById('shaderCode').value.trim();
+    const errorElement = document.getElementById('shaderError');
+    
+    if (!shaderCode) {
+        showShaderError('Please enter shader code');
+        return;
+    }
+    
+    if (!loadedModel) {
+        showShaderError('No object loaded to apply shader to');
+        return;
+    }
+    
+    try {
+        // Store original materials if not already stored
+        if (originalObjectMaterials.size === 0) {
+            storeOriginalMaterials();
+        }
+        
+        // Create shader uniforms
+        shaderUniforms = {
+            time: { value: 0.0 },
+            resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+            mouse: { value: new THREE.Vector2(0.5, 0.5) }
+        };
+        
+        // Basic vertex shader
+        const vertexShader = `
+            varying vec2 vUv;
+            varying vec3 vPosition;
+            varying vec3 vNormal;
+            
+            void main() {
+                vUv = uv;
+                vPosition = position;
+                vNormal = normal;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+        
+        // Wrap user fragment shader with necessary declarations
+        const fragmentShader = `
+            uniform float time;
+            uniform vec2 resolution;
+            uniform vec2 mouse;
+            varying vec2 vUv;
+            varying vec3 vPosition;
+            varying vec3 vNormal;
+            
+            ${shaderCode}
+        `;
+        
+        // Create custom shader material
+        customShaderMaterial = new THREE.ShaderMaterial({
+            uniforms: shaderUniforms,
+            vertexShader: vertexShader,
+            fragmentShader: fragmentShader,
+            transparent: true
+        });
+        
+        // Apply shader to all meshes in the loaded model
+        loadedModel.traverse(function(child) {
+            if (child.isMesh) {
+                child.material = customShaderMaterial;
+            }
+        });
+        
+        hideShaderError();
+        
+    } catch (error) {
+        showShaderError('Shader compilation error: ' + error.message);
+        console.error('Shader error:', error);
+    }
+}
+
+function resetToOriginalMaterials() {
+    if (!loadedModel || originalObjectMaterials.size === 0) return;
+    
+    loadedModel.traverse(function(child) {
+        if (child.isMesh && originalObjectMaterials.has(child)) {
+            child.material = originalObjectMaterials.get(child).clone();
+        }
+    });
+    
+    hideShaderError();
+}
+
+function loadExampleShader() {
+    const exampleShader = `// Animated rainbow effect
+void main() {
+    vec2 uv = vUv;
+    vec3 color = vec3(
+        sin(time + uv.x * 3.14159) * 0.5 + 0.5,
+        sin(time + uv.y * 3.14159 + 2.0) * 0.5 + 0.5,
+        sin(time + (uv.x + uv.y) * 3.14159 + 4.0) * 0.5 + 0.5
+    );
+    gl_FragColor = vec4(color, 1.0);
+}`;
+    
+    document.getElementById('shaderCode').value = exampleShader;
+}
+
+function updateShaderUniforms() {
+    if (customShaderMaterial && shaderUniforms.time) {
+        shaderUniforms.time.value = performance.now() * 0.001;
+    }
+}
+
+function showShaderError(message) {
+    const errorElement = document.getElementById('shaderError');
+    errorElement.textContent = message;
+    errorElement.style.display = 'block';
+}
+
+function hideShaderError() {
+    const errorElement = document.getElementById('shaderError');
+    errorElement.style.display = 'none';
+}
+
 function loadGLBModel() {
     const loader = new THREE.GLTFLoader();
     
@@ -435,6 +569,9 @@ function loadGLBModel() {
             // Analyze and update inspector info
             analyzeObject(loadedModel);
             
+            // Store original materials for shader functionality
+            storeOriginalMaterials();
+            
             scene.add(loadedModel);
             document.getElementById('modelStatus').textContent = 'test.glb loaded successfully';
         },
@@ -462,6 +599,9 @@ function loadGLBModel() {
             // Analyze placeholder
             analyzeObject(loadedModel);
             
+            // Store original materials for shader functionality
+            storeOriginalMaterials();
+            
             scene.add(placeholder);
         }
     );
@@ -481,6 +621,9 @@ function setupUIControls() {
     const emissiveIntensityValue = document.getElementById('emissiveIntensityValue');
     const objectOpacitySlider = document.getElementById('objectOpacity');
     const objectOpacityValue = document.getElementById('objectOpacityValue');
+    const applyShaderBtn = document.getElementById('applyShader');
+    const resetShaderBtn = document.getElementById('resetShader');
+    const loadExampleBtn = document.getElementById('loadExampleShader');
     const modelScale = document.getElementById('modelScale');
     const scaleValue = document.getElementById('scaleValue');
     const modelRotationX = document.getElementById('modelRotationX');
@@ -563,6 +706,10 @@ function setupUIControls() {
         updateObjectOpacity(value);
         objectOpacityValue.textContent = value.toFixed(1);
     });
+    
+    applyShaderBtn.addEventListener('click', applyCustomShader);
+    resetShaderBtn.addEventListener('click', resetToOriginalMaterials);
+    loadExampleBtn.addEventListener('click', loadExampleShader);
     
     modelScale.addEventListener('input', function() {
         manualScale = parseFloat(this.value);
@@ -796,6 +943,7 @@ function animate() {
     requestAnimationFrame(animate);
     controls.update();
     updateParticles();
+    updateShaderUniforms();
     renderer.render(scene, camera);
 }
 

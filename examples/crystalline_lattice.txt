@@ -1,0 +1,69 @@
+// Crystalline Lattice Structure
+// Creates a 3D crystal formation with internal refraction and growth patterns
+// Simulates the internal structure of gems and crystals
+
+void main() {
+    vec2 uv = vUv;
+    vec3 pos = vPosition;
+    vec3 normal = normalize(vNormal);
+    
+    // Create 3D crystal lattice grid
+    vec3 latticePos = pos * 8.0;
+    vec3 cellPos = fract(latticePos) - 0.5;
+    vec3 cellId = floor(latticePos);
+    
+    // Generate crystal formation patterns
+    float crystal1 = length(cellPos) - 0.3;
+    float crystal2 = max(abs(cellPos.x), max(abs(cellPos.y), abs(cellPos.z))) - 0.2;
+    float crystal3 = dot(abs(cellPos), vec3(0.577)) - 0.25; // Octahedral
+    
+    // Combine different crystal structures
+    float crystalField = min(crystal1, min(crystal2, crystal3));
+    
+    // Add growth rings and striations
+    float growthRings = sin(length(pos) * 15.0 - time * 0.5) * 0.1;
+    float striations = sin(dot(pos, vec3(1.0, 0.3, 0.7)) * 25.0) * 0.05;
+    
+    crystalField += growthRings + striations;
+    
+    // Create internal refraction patterns
+    vec3 refractDir = refract(normalize(pos), normal, 0.8);
+    float refraction = sin(dot(refractDir, pos) * 20.0 + time * 2.0);
+    
+    // Generate prismatic color dispersion
+    float dispersion = length(cellId) * 0.1 + time * 0.3;
+    vec3 prismColor = vec3(
+        sin(dispersion) * 0.5 + 0.5,
+        sin(dispersion + 2.094) * 0.5 + 0.5,
+        sin(dispersion + 4.188) * 0.5 + 0.5
+    );
+    
+    // Add crystal facet highlighting
+    float facetAngle = abs(dot(normal, vec3(0.577, 0.577, 0.577)));
+    vec3 facetHighlight = vec3(1.0, 0.95, 0.9) * pow(facetAngle, 3.0);
+    
+    // Create depth-based crystal clarity
+    float depth = smoothstep(-0.1, 0.1, crystalField);
+    depth = 1.0 - depth;
+    
+    // Internal crystal glow
+    float internalGlow = exp(-abs(crystalField) * 10.0);
+    vec3 glowColor = vec3(0.8, 0.9, 1.0) * internalGlow;
+    
+    // Combine all crystal effects
+    vec3 baseColor = prismColor * 0.6;
+    vec3 finalColor = baseColor + facetHighlight * 0.4 + glowColor * 0.3;
+    
+    // Add subtle internal reflections
+    float internalReflection = sin(refraction * 3.14159) * depth * 0.2;
+    finalColor += vec3(internalReflection);
+    
+    // Crystal transparency based on structure
+    float alpha = 0.3 + depth * 0.5 + internalGlow * 0.3;
+    
+    // Add crystalline edge enhancement
+    float edgeGlow = 1.0 - abs(dot(normal, normalize(pos)));
+    finalColor += vec3(0.7, 0.8, 1.0) * pow(edgeGlow, 4.0) * 0.5;
+    
+    gl_FragColor = vec4(finalColor, alpha);
+}

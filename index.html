@@ -175,6 +175,32 @@
             </div>
             
             <div class="collapsible-section">
+                <h4 class="section-header" data-section="shader">
+                    <span class="collapse-icon">▼</span> Custom Shader
+                </h4>
+                <div class="section-content" id="shader-content">
+                    <div class="shader-editor">
+                        <div class="shader-controls">
+                            <button id="applyShader">Apply Shader</button>
+                            <button id="resetShader">Reset to Original</button>
+                            <button id="loadExampleShader">Load Example</button>
+                        </div>
+                        <textarea 
+                            id="shaderCode" 
+                            class="shader-textarea" 
+                            placeholder="Paste your custom shader code here...
+Fragment shader example:
+uniform float time;
+void main() {
+    vec3 color = vec3(sin(time), cos(time), 0.5);
+    gl_FragColor = vec4(color, 1.0);
+}"></textarea>
+                        <div id="shaderError" class="shader-error"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="collapsible-section">
                 <h4 class="section-header" data-section="inspector">
                     <span class="collapse-icon">▼</span> Object Inspector
                 </h4>
