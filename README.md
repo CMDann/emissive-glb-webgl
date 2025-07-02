@@ -1,5 +1,7 @@
 # 3D Emissive Scene
 
+![3D Emissive Scene Screenshot](resources/ss.png)
+
 A comprehensive interactive 3D web application built with Three.js featuring advanced lighting, particle systems, custom shaders, and detailed object inspection tools.
 
 ## ✨ Features
@@ -70,6 +72,8 @@ emmsive/
 ├── index.html              # Main application
 ├── style.css               # UI styling
 ├── script.js               # Application logic
+├── resources/               # Documentation assets
+│   └── ss.png              # Screenshot for README
 ├── models/                  # 3D model assets
 │   └── test.glb            # Default test model
 ├── examples/                # Shader library
