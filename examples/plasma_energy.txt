@@ -1,6 +1,7 @@
 // Animated Plasma Energy Field
 // Creates a turbulent energy field with electric-like discharges
 // Perfect for sci-fi energy effects and power sources
+// Compatible with both static and animated objects
 
 void main() {
     vec2 uv = vUv;

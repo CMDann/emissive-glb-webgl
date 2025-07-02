@@ -1,6 +1,6 @@
 // Holographic Interference Pattern
 // Creates a complex holographic effect with interference waves and depth
-// Best applied to objects with interesting geometry
+// Compatible with both static and animated objects
 
 void main() {
     vec2 uv = vUv;

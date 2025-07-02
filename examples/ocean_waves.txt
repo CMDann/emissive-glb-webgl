@@ -1,6 +1,7 @@
 // Ocean Waves
 // Realistic ocean surface with foam and depth variation
 // Creates rolling waves with underwater caustics
+// Works on both static and animated objects
 
 void main() {
     vec2 uv = vUv;

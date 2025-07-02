@@ -1,6 +1,7 @@
 // Digital Matrix
 // Cyberpunk-style digital rain and data streams
 // Creates the iconic Matrix code effect with 3D depth
+// Compatible with both static and animated objects
 
 void main() {
     vec2 uv = vUv;

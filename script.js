@@ -445,6 +445,20 @@ function applyCustomShader() {
         return;
     }
     
+    // Check if the model has animations and warn user
+    let hasAnimations = false;
+    loadedModel.traverse(function(child) {
+        if (child.isMesh && (child.isSkinnedMesh || 
+            (child.geometry && child.geometry.attributes.skinIndex) ||
+            (child.geometry && child.geometry.morphAttributes && Object.keys(child.geometry.morphAttributes).length > 0))) {
+            hasAnimations = true;
+        }
+    });
+    
+    if (hasAnimations && animationMixer) {
+        console.warn('Note: Applying custom shaders to animated models may affect animations. Use "Reset to Original" to restore animations.');
+    }
+    
     try {
         // Store original materials if not already stored
         if (originalObjectMaterials.size === 0) {
