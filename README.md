@@ -2,7 +2,7 @@
 
 ![3D Emissive Scene Screenshot](resources/ss.png)
 
-A comprehensive interactive 3D web application built with Three.js featuring advanced lighting, particle systems, custom shaders, and detailed object inspection tools.
+A comprehensive interactive 3D web application built with Three.js featuring advanced lighting, particle systems, custom shaders, detailed object inspection tools, and a complete database-driven content management system for models and shaders.
 
 ## ✨ Features
 
@@ -44,11 +44,20 @@ A comprehensive interactive 3D web application built with Three.js featuring adv
 - **Minimal Footprint**: Compact design maximizes 3D viewport space
 - **Organized Categories**: Logical grouping of controls for easy navigation
 
+### 🗄️ **Database-Driven Content Management**
+- **SQLite Database**: Persistent storage for models and shaders
+- **File Upload System**: Upload GLB models and GLSL shaders with metadata
+- **REST API**: Complete CRUD operations for content management
+- **Categorized Organization**: Shaders organized by category (Nature, Mathematical, Sci-Fi, Custom)
+- **Dynamic Loading**: Real-time content loading from database
+- **Upload Validation**: File type and size validation for security
+
 ## 🚀 Getting Started
 
 ### Prerequisites
 - Modern web browser with WebGL support
-- Local HTTP server (required for model and shader loading)
+- Node.js 14+ for the database server
+- SQLite3 (automatically installed with dependencies)
 
 ### Installation
 ```bash
@@ -56,27 +65,45 @@ A comprehensive interactive 3D web application built with Three.js featuring adv
 git clone <repository-url>
 cd emmsive
 
-# Start local server (choose one)
-python -m http.server 8000
-# or
-npx serve .
-# or use any HTTP server
+# Install dependencies
+npm install
 
-# Open browser to http://localhost:8000
+# Initialize the database with example content
+npm run init-db
+
+# Start the Node.js server
+npm start
+
+# Open browser to http://localhost:3000
+```
+
+### Development Mode
+```bash
+# Start with auto-restart on file changes
+npm run dev
 ```
 
 ## 📁 Project Structure
 
 ```
 emmsive/
-├── index.html              # Main application
-├── style.css               # UI styling
-├── script.js               # Application logic
-├── resources/               # Documentation assets
+├── index.html              # Main application frontend
+├── style.css               # UI styling and layout
+├── script.js               # Frontend application logic
+├── server.js               # Node.js/Express backend server
+├── init-db.js              # Database initialization script
+├── package.json            # Node.js dependencies and scripts
+├── database/               # SQLite database storage
+│   └── emmsive.db          # Main database file
+├── uploads/                # User-uploaded content
+│   ├── models/             # Uploaded GLB models
+│   └── shaders/            # Uploaded shader files
+├── resources/              # Documentation assets
 │   └── ss.png              # Screenshot for README
-├── models/                  # 3D model assets
-│   └── test.glb            # Default test model
-├── examples/                # Shader library
+├── models/                 # Original/default 3D model assets
+│   ├── test.glb            # Default test model
+│   └── models.json         # Model discovery metadata
+├── examples/               # Default shader library
 │   ├── holographic_interference.txt
 │   ├── plasma_energy.txt
 │   ├── crystalline_lattice.txt
@@ -92,22 +119,29 @@ emmsive/
 │   ├── space_nebula.txt
 │   ├── quantum_fields.txt
 │   └── cyber_grid.txt
-├── README.md               # Documentation
+├── README.md               # This documentation
 └── LICENSE                 # MIT License
 ```
 
 ## 🎯 Usage Guide
 
 ### Loading Models
-1. Place GLB files in the `models/` directory
-2. The app automatically loads `test.glb` or shows a placeholder
-3. Use Model Transform controls to scale and rotate
+1. **Default Models**: The app loads with the default `test.glb` model
+2. **Upload New Models**: Use the "Upload Models & Shaders" section to upload GLB files
+3. **Select Models**: Choose from uploaded models in the Model dropdown
+4. **Transform Models**: Use Model Transform controls to scale and rotate
 
 ### Custom Shaders
-1. Open "Custom Shader" section
-2. Select from 15 pre-built examples or paste your own GLSL code
-3. Click "Apply Shader" to see results
-4. Use "Reset to Original" to restore default materials
+1. **Browse Examples**: Open "Custom Shader" section and select from categorized examples
+2. **Upload Shaders**: Use the upload section to add custom GLSL shader files (.txt or .glsl)
+3. **Edit Live**: Paste or modify GLSL fragment shader code in the editor
+4. **Apply/Reset**: Click "Apply Shader" to see results or "Reset to Original" to restore
+
+### Uploading Content
+1. **Upload Models**: Select GLB files, add name/description, and upload
+2. **Upload Shaders**: Select shader files, choose category, and upload
+3. **Organize Content**: Use categories and tags for better organization
+4. **Manage Files**: Files are stored in the database with metadata
 
 ### Lighting Setup
 1. Configure up to 5 directional lights
@@ -154,10 +188,18 @@ emmsive/
 ## 🔧 Technical Details
 
 ### Technology Stack
+#### Frontend
 - **Three.js r128**: 3D graphics and WebGL rendering
 - **GLSL Shaders**: Custom fragment shaders with live compilation
 - **HTML5/CSS3**: Modern web standards for UI
 - **Vanilla JavaScript**: No framework dependencies
+
+#### Backend
+- **Node.js**: Server runtime environment
+- **Express.js**: Web application framework
+- **SQLite3**: Lightweight database for content storage
+- **Multer**: File upload middleware
+- **CORS**: Cross-origin resource sharing
 
 ### Performance Features
 - **Efficient Particle System**: Optimized for smooth animation
@@ -222,9 +264,16 @@ Available uniforms:
 5. Open a Pull Request
 
 ### Adding New Shaders
+#### Via Upload Interface (Recommended)
+1. Open the "Upload Models & Shaders" section
+2. Select a shader file (.txt or .glsl)
+3. Add name, description, and category
+4. Upload to database for immediate availability
+
+#### Manual Addition
 1. Create a new `.txt` file in the `examples/` directory
 2. Add GLSL fragment shader code with comments
-3. Update the dropdown in `index.html` with the new option
+3. Run `npm run init-db` to update the database
 4. Test the shader for compilation errors and visual quality
 
 ## 📜 License
@@ -233,10 +282,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🐛 Known Issues
 
-- GLB models require HTTP server (not file://) for proper loading
+- Server must be running for database functionality (use `npm start`)
 - Large particle counts (>1500) may impact performance on older devices
 - Custom shaders with syntax errors will show compilation messages
 - Some advanced GLSL features may not be supported in all browsers
+- File uploads limited to 50MB (configurable in server.js)
 
 ## 🙏 Acknowledgments
 
